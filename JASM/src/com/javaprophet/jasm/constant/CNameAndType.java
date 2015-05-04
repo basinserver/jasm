@@ -13,4 +13,8 @@ public class CNameAndType extends ConstantInfo {
 		return this;
 	}
 	
+	@Override
+	public String getName() {
+		return "Name And Type";
+	}
 }

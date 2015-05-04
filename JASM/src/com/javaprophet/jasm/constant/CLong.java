@@ -12,4 +12,9 @@ public class CLong extends ConstantInfo {
 		return this;
 	}
 	
+	@Override
+	public String getName() {
+		return "Long";
+	}
+	
 }

@@ -12,4 +12,8 @@ public class CString extends ConstantInfo {
 		return this;
 	}
 	
+	@Override
+	public String getName() {
+		return "String";
+	}
 }

@@ -13,4 +13,8 @@ public class CMethodHandle extends ConstantInfo {
 		return this;
 	}
 	
+	@Override
+	public String getName() {
+		return "Method Handle";
+	}
 }

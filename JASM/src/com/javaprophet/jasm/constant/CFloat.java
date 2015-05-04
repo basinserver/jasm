@@ -12,4 +12,9 @@ public class CFloat extends ConstantInfo {
 		return this;
 	}
 	
+	@Override
+	public String getName() {
+		return "Float";
+	}
+	
 }

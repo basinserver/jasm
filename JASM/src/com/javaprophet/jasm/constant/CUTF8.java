@@ -14,4 +14,8 @@ public class CUTF8 extends ConstantInfo {
 		return this;
 	}
 	
+	@Override
+	public String getName() {
+		return "UTF8";
+	}
 }

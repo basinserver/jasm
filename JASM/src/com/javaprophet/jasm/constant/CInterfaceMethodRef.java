@@ -13,4 +13,9 @@ public class CInterfaceMethodRef extends ConstantInfo {
 		return this;
 	}
 	
+	@Override
+	public String getName() {
+		return "Interface Method Reference";
+	}
+	
 }

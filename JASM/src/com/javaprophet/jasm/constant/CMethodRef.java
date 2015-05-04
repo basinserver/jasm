@@ -12,4 +12,9 @@ public class CMethodRef extends ConstantInfo {
 		name_and_type_index = in.readUnsignedShort();
 		return this;
 	}
+	
+	@Override
+	public String getName() {
+		return "Method Reference";
+	}
 }

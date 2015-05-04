@@ -12,4 +12,9 @@ public class CClass extends ConstantInfo {
 		return this;
 	}
 	
+	@Override
+	public String getName() {
+		return "Class";
+	}
+	
 }

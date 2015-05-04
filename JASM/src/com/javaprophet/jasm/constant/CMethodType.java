@@ -12,4 +12,8 @@ public class CMethodType extends ConstantInfo {
 		return this;
 	}
 	
+	@Override
+	public String getName() {
+		return "Method Type";
+	}
 }

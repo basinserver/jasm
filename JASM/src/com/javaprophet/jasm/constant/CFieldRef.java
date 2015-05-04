@@ -13,4 +13,9 @@ public class CFieldRef extends ConstantInfo {
 		return this;
 	}
 	
+	@Override
+	public String getName() {
+		return "Field Reference";
+	}
+	
 }

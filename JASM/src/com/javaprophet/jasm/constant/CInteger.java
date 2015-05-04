@@ -12,4 +12,8 @@ public class CInteger extends ConstantInfo {
 		return this;
 	}
 	
+	@Override
+	public String getName() {
+		return "Integer";
+	}
 }
