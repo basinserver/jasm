@@ -2,8 +2,13 @@ package com.javaprophet.jasm.constant;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import com.javaprophet.jasm.ClassFile;
 
 public class CNameAndType extends ConstantInfo {
+	public CNameAndType(ClassFile cf, int index) {
+		super(cf, index);
+	}
+	
 	public int name_index = -1, descriptor_index = -1;
 	
 	@Override

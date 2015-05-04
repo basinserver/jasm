@@ -6,21 +6,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import com.javaprophet.jasm.ClassFile;
-import com.javaprophet.jasm.constant.CClass;
-import com.javaprophet.jasm.constant.CDouble;
-import com.javaprophet.jasm.constant.CFieldRef;
-import com.javaprophet.jasm.constant.CFloat;
-import com.javaprophet.jasm.constant.CInteger;
-import com.javaprophet.jasm.constant.CInterfaceMethodRef;
-import com.javaprophet.jasm.constant.CInvokeDynamic;
-import com.javaprophet.jasm.constant.CLong;
-import com.javaprophet.jasm.constant.CMethodHandle;
-import com.javaprophet.jasm.constant.CMethodRef;
-import com.javaprophet.jasm.constant.CMethodType;
-import com.javaprophet.jasm.constant.CNameAndType;
-import com.javaprophet.jasm.constant.CString;
-import com.javaprophet.jasm.constant.CUTF8;
-import com.javaprophet.jasm.constant.ConstantInfo;
 
 public class InstructionSet {
 	private final ClassFile cf;
@@ -36,101 +21,6 @@ public class InstructionSet {
 	public InstructionSet read(byte[] code) {
 		this.code = code;
 		return this;
-	}
-	
-	private static final String crlf = System.getProperty("line.separator");
-	
-	public String resolve(int cref) {
-		return (String)resolve(cref, true);
-	}
-	
-	private Object resolve(int cref, boolean base) {
-		ConstantInfo ci = cf.getConstant(cref);
-		Object res = null;
-		if (ci instanceof CClass) {
-			res = resolve(((CClass)ci).name_index, false);
-		}else if (ci instanceof CDouble) {
-			res = ((CDouble)ci).dbl + "";
-		}else if (ci instanceof CLong) {
-			res = ((CLong)ci).lng + "";
-		}else if (ci instanceof CInteger) {
-			res = ((CInteger)ci).integer + "";
-		}else if (ci instanceof CFloat) {
-			res = ((CFloat)ci).flt + "";
-		}else if (ci instanceof CFieldRef) {
-			res = resolve(((CFieldRef)ci).class_index, false) + "/" + (String)resolve(((CFieldRef)ci).name_and_type_index, false);
-		}else if (ci instanceof CMethodRef) {
-			res = resolve(((CMethodRef)ci).class_index, false) + "/" + (String)resolve(((CMethodRef)ci).name_and_type_index, false);
-		}else if (ci instanceof CInterfaceMethodRef) {
-			res = resolve(((CInterfaceMethodRef)ci).class_index, false) + "/" + (String)resolve(((CInterfaceMethodRef)ci).name_and_type_index, false);
-		}else if (ci instanceof CInvokeDynamic) {
-			res = resolve(((CInvokeDynamic)ci).name_and_type_index, false);
-		}else if (ci instanceof CMethodHandle) {
-			res = resolve(((CMethodHandle)ci).reference_index, false); // TODO: reference_type
-		}else if (ci instanceof CMethodType) {
-			res = resolve(((CMethodType)ci).descriptor_index, false);
-		}else if (ci instanceof CNameAndType) {
-			res = resolve(((CNameAndType)ci).name_index, false) + " " + (String)resolve(((CNameAndType)ci).descriptor_index, false); // TODO: reference_type
-		}else if (ci instanceof CString) {
-			res = resolve(((CString)ci).string_index, false);
-		}else if (ci instanceof CUTF8) {
-			res = ((CUTF8)ci).utf;
-		}
-		if (base) {
-			String ress = (String)res;
-			ress = cref + " // -> " + ress;
-			ress = ress.replace(crlf, crlf + "//");
-			res = ress;
-		}
-		return res;
-	}
-	
-	public String resolveold(int cref) {
-		ConstantInfo ci = cf.getConstant(cref);
-		String ev = "";
-		if (ci instanceof CInteger) {
-			ev = ((CInteger)ci).integer + "";
-		}else if (ci instanceof CFloat) {
-			ev = ((CFloat)ci).flt + "";
-		}else if (ci instanceof CString) {
-			int ri = ((CString)ci).string_index;
-			CUTF8 cu = (CUTF8)cf.getConstant(ri);
-			ev = ri + " // -> " + cu.utf;
-		}else if (ci instanceof CClass) {
-			int ri = ((CClass)ci).name_index;
-			CUTF8 cu = (CUTF8)cf.getConstant(ri);
-			ev = ri + " // -> " + cu.utf;
-		}else if (ci instanceof CMethodType) {
-			int ri = ((CMethodType)ci).descriptor_index;
-			CUTF8 cu = (CUTF8)cf.getConstant(ri);
-			ev = ri + " // -> " + cu.utf;
-		}else if (ci instanceof CMethodHandle) {
-			int ri = ((CMethodHandle)ci).reference_index; // TODO: switch of ref index
-			CUTF8 cu = (CUTF8)cf.getConstant(ri);
-			ev = ri + " // -> " + cu.utf;
-		}else if (ci instanceof CLong) {
-			ev = ((CLong)ci).lng + "";
-		}else if (ci instanceof CDouble) {
-			ev = ((CDouble)ci).dbl + "";
-		}else if (ci instanceof CMethodRef) {
-			CClass ci2 = (CClass)cf.getConstant(((CMethodRef)ci).class_index);
-			CNameAndType ci3 = (CNameAndType)cf.getConstant(((CMethodRef)ci).name_and_type_index);
-			int ri = ci2.name_index;
-			CUTF8 cu = (CUTF8)cf.getConstant(ri);
-			ev = ri + " // -> " + cu.utf;
-		}else if (ci instanceof CInterfaceMethodRef) {
-			ci = (CClass)cf.getConstant(((CInterfaceMethodRef)ci).class_index);
-			int ri = ((CClass)ci).name_index;
-			CUTF8 cu = (CUTF8)cf.getConstant(ri);
-			ev = ri + " // -> " + cu.utf;
-		}else if (ci instanceof CFieldRef) {
-			ci = (CClass)cf.getConstant(((CFieldRef)ci).class_index);
-			int ri = ((CClass)ci).name_index;
-			CUTF8 cu = (CUTF8)cf.getConstant(ri);
-			ev = ri + " // -> " + cu.utf;
-		}
-		ev = ev.replace(crlf, crlf + "//");
-		return ev;
 	}
 	
 	public String toString() {
@@ -197,13 +87,13 @@ public class InstructionSet {
 					pw.println("sipush");
 					break;
 				case 18:
-					pw.println("ldc " + resolve(in.read()));
+					pw.println("ldc " + cf.resolveConstant(in.read()));
 					break;
 				case 19:
-					pw.println("ldc_w " + resolve(in.readUnsignedShort()));
+					pw.println("ldc_w " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 20:
-					pw.println("ldc2_w " + resolve(in.readUnsignedShort()));
+					pw.println("ldc2_w " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 21:
 					pw.println("iload " + in.read());
@@ -678,34 +568,34 @@ public class InstructionSet {
 					pw.println("return");
 					break;
 				case 178:
-					pw.println("getstatic " + resolve(in.readUnsignedShort()));
+					pw.println("getstatic " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 179:
-					pw.println("putstatic " + resolve(in.readUnsignedShort()));
+					pw.println("putstatic " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 180:
-					pw.println("getfield " + resolve(in.readUnsignedShort()));
+					pw.println("getfield " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 181:
-					pw.println("putfield " + resolve(in.readUnsignedShort()));
+					pw.println("putfield " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 182:
-					pw.println("invokevirtual " + resolve(in.readUnsignedShort()));
+					pw.println("invokevirtual " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 183:
-					pw.println("invokespecial " + resolve(in.readUnsignedShort()));
+					pw.println("invokespecial " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 184:
-					pw.println("invokestatic " + resolve(in.readUnsignedShort()));
+					pw.println("invokestatic " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 185:
-					pw.println("invokeinterface " + resolve(in.readUnsignedShort()) + " " + in.read());
+					pw.println("invokeinterface " + cf.resolveConstant(in.readUnsignedShort()) + " " + in.read());
 					break;
 				case 186:
-					pw.println("invokedynamic " + resolve(in.readUnsignedShort()));
+					pw.println("invokedynamic " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 187:
-					pw.println("new " + resolve(in.readUnsignedShort()));
+					pw.println("new " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 188:
 					int t = in.read();
@@ -742,7 +632,7 @@ public class InstructionSet {
 					pw.println("newarray " + r);
 					break;
 				case 189:
-					pw.println("anewarray " + resolve(in.readUnsignedShort()));
+					pw.println("anewarray " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 190:
 					pw.println("arraylength");
@@ -751,10 +641,10 @@ public class InstructionSet {
 					pw.println("athrow");
 					break;
 				case 192:
-					pw.println("checkcast " + resolve(in.readUnsignedShort()));
+					pw.println("checkcast " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 193:
-					pw.println("instanceof " + resolve(in.readUnsignedShort()));
+					pw.println("instanceof " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 194:
 					pw.println("monitorenter");
@@ -766,7 +656,7 @@ public class InstructionSet {
 					pw.println("wide");
 					break;
 				case 197:
-					pw.println("multianewarray " + resolve(in.readUnsignedShort()) + " " + in.read());
+					pw.println("multianewarray " + cf.resolveConstant(in.readUnsignedShort()) + " " + in.read());
 					break;
 				case 198:
 					pw.println("ifnull " + in.readUnsignedShort());

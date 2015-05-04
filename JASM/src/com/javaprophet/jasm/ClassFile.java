@@ -93,6 +93,57 @@ public class ClassFile {
 		return getClassName();
 	}
 	
+	private static final String crlf = System.getProperty("line.separator");
+	
+	public String resolveConstant(int cref) {
+		return (String)resolveConstant(cref, true);
+	}
+	
+	public String resolveConstant(int cref, boolean resolve) {
+		return (String)resolveConstant(cref, resolve, true);
+	}
+	
+	private Object resolveConstant(int cref, boolean resolve, boolean base) {
+		ConstantInfo ci = getConstant(cref);
+		Object res = null;
+		if (ci instanceof CClass) {
+			res = resolveConstant(((CClass)ci).name_index, false);
+		}else if (ci instanceof CDouble) {
+			res = ((CDouble)ci).dbl + "";
+		}else if (ci instanceof CLong) {
+			res = ((CLong)ci).lng + "";
+		}else if (ci instanceof CInteger) {
+			res = ((CInteger)ci).integer + "";
+		}else if (ci instanceof CFloat) {
+			res = ((CFloat)ci).flt + "";
+		}else if (ci instanceof CFieldRef) {
+			res = resolveConstant(((CFieldRef)ci).class_index, false) + "/" + (String)resolveConstant(((CFieldRef)ci).name_and_type_index, false);
+		}else if (ci instanceof CMethodRef) {
+			res = resolveConstant(((CMethodRef)ci).class_index, false) + "/" + (String)resolveConstant(((CMethodRef)ci).name_and_type_index, false);
+		}else if (ci instanceof CInterfaceMethodRef) {
+			res = resolveConstant(((CInterfaceMethodRef)ci).class_index, false) + "/" + (String)resolveConstant(((CInterfaceMethodRef)ci).name_and_type_index, false);
+		}else if (ci instanceof CInvokeDynamic) {
+			res = resolveConstant(((CInvokeDynamic)ci).name_and_type_index, false);
+		}else if (ci instanceof CMethodHandle) {
+			res = resolveConstant(((CMethodHandle)ci).reference_index, false); // TODO: reference_type
+		}else if (ci instanceof CMethodType) {
+			res = resolveConstant(((CMethodType)ci).descriptor_index, false);
+		}else if (ci instanceof CNameAndType) {
+			res = resolveConstant(((CNameAndType)ci).name_index, false) + " " + (String)resolveConstant(((CNameAndType)ci).descriptor_index, false); // TODO: reference_type
+		}else if (ci instanceof CString) {
+			res = resolveConstant(((CString)ci).string_index, false);
+		}else if (ci instanceof CUTF8) {
+			res = ((CUTF8)ci).utf;
+		}
+		if (resolve && base) {
+			String ress = (String)res;
+			ress = cref + " // -> " + ress;
+			ress = ress.replace(crlf, crlf + "//");
+			res = ress;
+		}
+		return res;
+	}
+	
 	public String getClassName() {
 		CClass pp = (CClass)ci[thisClass];
 		CUTF8 name = (CUTF8)ci[pp.name_index];
@@ -126,46 +177,46 @@ public class ClassFile {
 			int type = in.read();
 			switch (type) {
 			case 1:
-				this.ci[i] = new CUTF8().read(in);
+				this.ci[i] = new CUTF8(this, i).read(in);
 				break;
 			case 3:
-				this.ci[i] = new CInteger().read(in);
+				this.ci[i] = new CInteger(this, i).read(in);
 				break;
 			case 4:
-				this.ci[i] = new CFloat().read(in);
+				this.ci[i] = new CFloat(this, i).read(in);
 				break;
 			case 5:
-				this.ci[i] = new CLong().read(in);
+				this.ci[i] = new CLong(this, i).read(in);
 				break;
 			case 6:
-				this.ci[i] = new CDouble().read(in);
+				this.ci[i] = new CDouble(this, i).read(in);
 				break;
 			case 7:
-				this.ci[i] = new CClass().read(in);
+				this.ci[i] = new CClass(this, i).read(in);
 				break;
 			case 8:
-				this.ci[i] = new CString().read(in);
+				this.ci[i] = new CString(this, i).read(in);
 				break;
 			case 9:
-				this.ci[i] = new CFieldRef().read(in);
+				this.ci[i] = new CFieldRef(this, i).read(in);
 				break;
 			case 10:
-				this.ci[i] = new CMethodRef().read(in);
+				this.ci[i] = new CMethodRef(this, i).read(in);
 				break;
 			case 11:
-				this.ci[i] = new CInterfaceMethodRef().read(in);
+				this.ci[i] = new CInterfaceMethodRef(this, i).read(in);
 				break;
 			case 12:
-				this.ci[i] = new CNameAndType().read(in);
+				this.ci[i] = new CNameAndType(this, i).read(in);
 				break;
 			case 15:
-				this.ci[i] = new CMethodHandle().read(in);
+				this.ci[i] = new CMethodHandle(this, i).read(in);
 				break;
 			case 16:
-				this.ci[i] = new CMethodType().read(in);
+				this.ci[i] = new CMethodType(this, i).read(in);
 				break;
 			case 18:
-				this.ci[i] = new CInvokeDynamic().read(in);
+				this.ci[i] = new CInvokeDynamic(this, i).read(in);
 				break;
 			}
 		}

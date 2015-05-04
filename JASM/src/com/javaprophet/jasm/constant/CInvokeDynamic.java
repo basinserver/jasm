@@ -2,8 +2,13 @@ package com.javaprophet.jasm.constant;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import com.javaprophet.jasm.ClassFile;
 
 public class CInvokeDynamic extends ConstantInfo {
+	public CInvokeDynamic(ClassFile cf, int index) {
+		super(cf, index);
+	}
+	
 	public int bootstrap_method_attr_index = -1, name_and_type_index = -1;
 	
 	@Override

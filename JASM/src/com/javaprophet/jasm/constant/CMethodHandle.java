@@ -2,8 +2,13 @@ package com.javaprophet.jasm.constant;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import com.javaprophet.jasm.ClassFile;
 
 public class CMethodHandle extends ConstantInfo {
+	public CMethodHandle(ClassFile cf, int index) {
+		super(cf, index);
+	}
+	
 	public int reference_type = -1, reference_index = -1;
 	
 	@Override

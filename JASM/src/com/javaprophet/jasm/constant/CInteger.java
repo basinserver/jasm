@@ -2,8 +2,13 @@ package com.javaprophet.jasm.constant;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import com.javaprophet.jasm.ClassFile;
 
 public class CInteger extends ConstantInfo {
+	public CInteger(ClassFile cf, int index) {
+		super(cf, index);
+	}
+	
 	public int integer = -1;
 	
 	@Override
@@ -15,5 +20,10 @@ public class CInteger extends ConstantInfo {
 	@Override
 	public String getName() {
 		return "Integer";
+	}
+	
+	@Override
+	public String toString() {
+		return integer + "";
 	}
 }
