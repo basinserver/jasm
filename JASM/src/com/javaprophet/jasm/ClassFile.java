@@ -20,6 +20,7 @@ import com.javaprophet.jasm.constant.CMethodRef;
 import com.javaprophet.jasm.constant.CMethodType;
 import com.javaprophet.jasm.constant.CNameAndType;
 import com.javaprophet.jasm.constant.CString;
+import com.javaprophet.jasm.constant.CType;
 import com.javaprophet.jasm.constant.CUTF8;
 import com.javaprophet.jasm.constant.ConstantInfo;
 import com.javaprophet.jasm.field.FieldInfo;
@@ -77,6 +78,10 @@ public class ClassFile {
 		return ci[i];
 	}
 	
+	public void setConstant(int i, ConstantInfo info) {
+		ci[i] = info;
+	}
+	
 	public int getClassIndex() {
 		return thisClass;
 	}
@@ -95,19 +100,54 @@ public class ClassFile {
 	
 	private static final String crlf = System.getProperty("line.separator");
 	
+	public ConstantInfo constuctConstant(CType type, int index, String s) throws Exception {
+		switch (type) {
+		case CLASS:
+			return new CClass(this, index).from(s);
+		case DOUBLE:
+			return new CDouble(this, index).from(s);
+		case FIELDREF:
+			return new CFieldRef(this, index).from(s);
+		case FLOAT:
+			return new CFloat(this, index).from(s);
+		case INTEGER:
+			return new CInteger(this, index).from(s);
+		case INTERFACEMETHODREF:
+			return new CInterfaceMethodRef(this, index).from(s);
+		case INVOKEDYNAMIC:
+			return new CInvokeDynamic(this, index).from(s);
+		case LONG:
+			return new CLong(this, index).from(s);
+		case METHODHANDLE:
+			return new CMethodHandle(this, index).from(s);
+		case METHODREF:
+			return new CMethodRef(this, index).from(s);
+		case METHODTYPE:
+			return new CMethodType(this, index).from(s);
+		case NAMEANDTYPE:
+			return new CNameAndType(this, index).from(s);
+		case STRING:
+			return new CString(this, index).from(s);
+		case UTF8:
+			return new CUTF8(this, index).from(s);
+		default:
+			throw new Exception("Invalid Type!");
+		}
+	}
+	
 	public String resolveConstant(int cref) {
 		return (String)resolveConstant(cref, true);
 	}
 	
 	public String resolveConstant(int cref, boolean resolve) {
-		return (String)resolveConstant(cref, resolve, true);
+		return (String)resolveConstant(cref, resolve, true, false);
 	}
 	
-	private Object resolveConstant(int cref, boolean resolve, boolean base) {
+	private Object resolveConstant(int cref, boolean resolve, boolean base, boolean sw) {
 		ConstantInfo ci = getConstant(cref);
 		Object res = null;
 		if (ci instanceof CClass) {
-			res = resolveConstant(((CClass)ci).name_index, false);
+			res = resolveConstant(((CClass)ci).name_index, resolve, false, false);
 		}else if (ci instanceof CDouble) {
 			res = ((CDouble)ci).dbl + "";
 		}else if (ci instanceof CLong) {
@@ -117,21 +157,21 @@ public class ClassFile {
 		}else if (ci instanceof CFloat) {
 			res = ((CFloat)ci).flt + "";
 		}else if (ci instanceof CFieldRef) {
-			res = resolveConstant(((CFieldRef)ci).class_index, false) + "/" + (String)resolveConstant(((CFieldRef)ci).name_and_type_index, false);
+			res = resolveConstant(((CFieldRef)ci).class_index, resolve, false, false) + "/" + (String)resolveConstant(((CFieldRef)ci).name_and_type_index, resolve, false, true);
 		}else if (ci instanceof CMethodRef) {
-			res = resolveConstant(((CMethodRef)ci).class_index, false) + "/" + (String)resolveConstant(((CMethodRef)ci).name_and_type_index, false);
+			res = resolveConstant(((CMethodRef)ci).class_index, resolve, false, false) + "/" + (String)resolveConstant(((CMethodRef)ci).name_and_type_index, resolve, false, false);
 		}else if (ci instanceof CInterfaceMethodRef) {
-			res = resolveConstant(((CInterfaceMethodRef)ci).class_index, false) + "/" + (String)resolveConstant(((CInterfaceMethodRef)ci).name_and_type_index, false);
+			res = resolveConstant(((CInterfaceMethodRef)ci).class_index, resolve, false, false) + "/" + (String)resolveConstant(((CInterfaceMethodRef)ci).name_and_type_index, resolve, false, false);
 		}else if (ci instanceof CInvokeDynamic) {
-			res = resolveConstant(((CInvokeDynamic)ci).name_and_type_index, false);
+			res = resolveConstant(((CInvokeDynamic)ci).name_and_type_index, resolve, false, false);
 		}else if (ci instanceof CMethodHandle) {
-			res = resolveConstant(((CMethodHandle)ci).reference_index, false); // TODO: reference_type
+			res = resolveConstant(((CMethodHandle)ci).reference_index, resolve, false, false); // TODO: reference_type
 		}else if (ci instanceof CMethodType) {
-			res = resolveConstant(((CMethodType)ci).descriptor_index, false);
+			res = resolveConstant(((CMethodType)ci).descriptor_index, resolve, false, false);
 		}else if (ci instanceof CNameAndType) {
-			res = resolveConstant(((CNameAndType)ci).name_index, false) + " " + (String)resolveConstant(((CNameAndType)ci).descriptor_index, false); // TODO: reference_type
+			res = resolveConstant(((CNameAndType)ci).name_index, resolve, false, false) + (sw ? " " : "\0") + (String)resolveConstant(((CNameAndType)ci).descriptor_index, resolve, false, false); // TODO: reference_type
 		}else if (ci instanceof CString) {
-			res = resolveConstant(((CString)ci).string_index, false);
+			res = resolveConstant(((CString)ci).string_index, resolve, false, false);
 		}else if (ci instanceof CUTF8) {
 			res = ((CUTF8)ci).utf;
 		}

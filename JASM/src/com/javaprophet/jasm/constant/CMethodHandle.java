@@ -6,7 +6,7 @@ import com.javaprophet.jasm.ClassFile;
 
 public class CMethodHandle extends ConstantInfo {
 	public CMethodHandle(ClassFile cf, int index) {
-		super(cf, index);
+		super(CType.METHODHANDLE, cf, index);
 	}
 	
 	public int reference_type = -1, reference_index = -1;
@@ -20,6 +20,12 @@ public class CMethodHandle extends ConstantInfo {
 	
 	@Override
 	public String getName() {
-		return "Method Handle";
+		return "Method ndle";
+	}
+	
+	@Override
+	public ConstantInfo from(String s) throws Exception {
+		cf.getConstant(reference_index).from(s);
+		return this;
 	}
 }

@@ -6,7 +6,7 @@ import com.javaprophet.jasm.ClassFile;
 
 public class CNameAndType extends ConstantInfo {
 	public CNameAndType(ClassFile cf, int index) {
-		super(cf, index);
+		super(CType.NAMEANDTYPE, cf, index);
 	}
 	
 	public int name_index = -1, descriptor_index = -1;
@@ -20,6 +20,18 @@ public class CNameAndType extends ConstantInfo {
 	
 	@Override
 	public String getName() {
-		return "Name And Type";
+		return "NameType";
+	}
+	
+	@Override
+	public ConstantInfo from(String s) throws Exception {
+		if (s.contains("\0")) {
+			cf.getConstant(name_index).from(s.substring(0, s.indexOf("\0")));
+			cf.getConstant(descriptor_index).from(s.substring(s.indexOf("\0") + 1));
+		}else {
+			cf.getConstant(name_index).from(s.substring(0, s.indexOf(" ")));
+			cf.getConstant(descriptor_index).from(s.substring(s.indexOf(" ") + 1));
+		}
+		return null;
 	}
 }

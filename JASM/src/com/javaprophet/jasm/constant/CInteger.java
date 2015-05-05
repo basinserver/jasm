@@ -6,7 +6,7 @@ import com.javaprophet.jasm.ClassFile;
 
 public class CInteger extends ConstantInfo {
 	public CInteger(ClassFile cf, int index) {
-		super(cf, index);
+		super(CType.INTEGER, cf, index);
 	}
 	
 	public int integer = -1;
@@ -25,5 +25,11 @@ public class CInteger extends ConstantInfo {
 	@Override
 	public String toString() {
 		return integer + "";
+	}
+	
+	@Override
+	public ConstantInfo from(String s) throws Exception {
+		integer = Integer.parseInt(s);
+		return this;
 	}
 }

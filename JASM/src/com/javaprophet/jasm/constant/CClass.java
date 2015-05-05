@@ -6,7 +6,7 @@ import com.javaprophet.jasm.ClassFile;
 
 public class CClass extends ConstantInfo {
 	public CClass(ClassFile cf, int index) {
-		super(cf, index);
+		super(CType.CLASS, cf, index);
 	}
 	
 	public int name_index = -1;
@@ -20,6 +20,12 @@ public class CClass extends ConstantInfo {
 	@Override
 	public String getName() {
 		return "Class";
+	}
+	
+	@Override
+	public ConstantInfo from(String s) throws Exception {
+		cf.getConstant(name_index).from(s);
+		return this;
 	}
 	
 }

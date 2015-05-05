@@ -6,7 +6,7 @@ import com.javaprophet.jasm.ClassFile;
 
 public class CInvokeDynamic extends ConstantInfo {
 	public CInvokeDynamic(ClassFile cf, int index) {
-		super(cf, index);
+		super(CType.INVOKEDYNAMIC, cf, index);
 	}
 	
 	public int bootstrap_method_attr_index = -1, name_and_type_index = -1;
@@ -20,6 +20,11 @@ public class CInvokeDynamic extends ConstantInfo {
 	
 	@Override
 	public String getName() {
-		return "Invoke Dynamic";
+		return "InvokeDynamic";
+	}
+	
+	@Override
+	public ConstantInfo from(String s) throws Exception {
+		return null;
 	}
 }

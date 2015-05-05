@@ -6,7 +6,7 @@ import com.javaprophet.jasm.ClassFile;
 
 public class CMethodRef extends ConstantInfo {
 	public CMethodRef(ClassFile cf, int index) {
-		super(cf, index);
+		super(CType.METHODREF, cf, index);
 	}
 	
 	public int class_index = -1, name_and_type_index = -1;
@@ -20,6 +20,14 @@ public class CMethodRef extends ConstantInfo {
 	
 	@Override
 	public String getName() {
-		return "Method Reference";
+		return "MethodRef";
+	}
+	
+	@Override
+	public ConstantInfo from(String s) throws Exception {
+		if (!s.contains("/")) throw new Exception("Malformed Field Reference!");
+		cf.getConstant(class_index).from(s.substring(0, s.lastIndexOf('/')));
+		cf.getConstant(name_and_type_index).from(s.substring(s.lastIndexOf('/') + 1));
+		return this;
 	}
 }

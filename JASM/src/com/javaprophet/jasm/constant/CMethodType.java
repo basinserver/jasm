@@ -6,7 +6,7 @@ import com.javaprophet.jasm.ClassFile;
 
 public class CMethodType extends ConstantInfo {
 	public CMethodType(ClassFile cf, int index) {
-		super(cf, index);
+		super(CType.METHODTYPE, cf, index);
 	}
 	
 	public int descriptor_index = -1;
@@ -19,6 +19,12 @@ public class CMethodType extends ConstantInfo {
 	
 	@Override
 	public String getName() {
-		return "Method Type";
+		return "MethodType";
+	}
+	
+	@Override
+	public ConstantInfo from(String s) throws Exception {
+		cf.getConstant(descriptor_index).from(s);
+		return this;
 	}
 }

@@ -6,7 +6,7 @@ import com.javaprophet.jasm.ClassFile;
 
 public class CFloat extends ConstantInfo {
 	public CFloat(ClassFile cf, int index) {
-		super(cf, index);
+		super(CType.FLOAT, cf, index);
 	}
 	
 	public float flt = -1F;
@@ -27,4 +27,9 @@ public class CFloat extends ConstantInfo {
 		return flt + "";
 	}
 	
+	@Override
+	public ConstantInfo from(String s) throws Exception {
+		flt = Float.parseFloat(s);
+		return this;
+	}
 }

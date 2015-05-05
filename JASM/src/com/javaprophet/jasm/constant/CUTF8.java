@@ -6,7 +6,7 @@ import com.javaprophet.jasm.ClassFile;
 
 public class CUTF8 extends ConstantInfo {
 	public CUTF8(ClassFile cf, int index) {
-		super(cf, index);
+		super(CType.UTF8, cf, index);
 	}
 	
 	public String utf = null;
@@ -22,5 +22,11 @@ public class CUTF8 extends ConstantInfo {
 	@Override
 	public String getName() {
 		return "UTF8";
+	}
+	
+	@Override
+	public ConstantInfo from(String s) throws Exception {
+		this.utf = s;
+		return this;
 	}
 }

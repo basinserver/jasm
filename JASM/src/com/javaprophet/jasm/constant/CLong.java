@@ -6,7 +6,7 @@ import com.javaprophet.jasm.ClassFile;
 
 public class CLong extends ConstantInfo {
 	public CLong(ClassFile cf, int index) {
-		super(cf, index);
+		super(CType.LONG, cf, index);
 	}
 	
 	public long lng = -1L;
@@ -27,4 +27,9 @@ public class CLong extends ConstantInfo {
 		return lng + "";
 	}
 	
+	@Override
+	public ConstantInfo from(String s) throws Exception {
+		this.lng = Long.parseLong(s);
+		return this;
+	}
 }
