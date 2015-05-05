@@ -29,7 +29,7 @@ public class Code {
 		max_locals = in.readUnsignedShort();
 		byte[] code = new byte[in.readInt()];
 		in.readFully(code);
-		this.code = new InstructionSet(name, cf).read(code);
+		this.code = new InstructionSet(cf).read(code);
 		int eel = in.readUnsignedShort();
 		ees = new ExceptionEntry[eel];
 		for (int i = 0; i < ees.length; i++) {
