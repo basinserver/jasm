@@ -1,6 +1,7 @@
 package com.javaprophet.jasm.attribute;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class AttributeInfo {
@@ -16,6 +17,13 @@ public class AttributeInfo {
 		byte[] aib = new byte[in.readInt()];
 		in.readFully(aib);
 		attribute_info = aib;
+		return this;
+	}
+	
+	public AttributeInfo write(DataOutputStream out) throws IOException {
+		out.writeShort(attribute_name_index);
+		out.writeInt(attribute_info.length);
+		out.write(attribute_info);
 		return this;
 	}
 	

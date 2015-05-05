@@ -1,6 +1,7 @@
 package com.javaprophet.jasm.constant;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import com.javaprophet.jasm.ClassFile;
 
@@ -27,6 +28,14 @@ public class CUTF8 extends ConstantInfo {
 	@Override
 	public ConstantInfo from(String s) throws Exception {
 		this.utf = s;
+		return this;
+	}
+	
+	@Override
+	public ConstantInfo write(DataOutputStream out) throws IOException {
+		byte[] utf = this.utf.getBytes();
+		out.writeShort(utf.length);
+		out.write(utf);
 		return this;
 	}
 }

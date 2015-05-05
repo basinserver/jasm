@@ -1,6 +1,7 @@
 package com.javaprophet.jasm.constant;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import com.javaprophet.jasm.ClassFile;
 
@@ -28,6 +29,13 @@ public class CInterfaceMethodRef extends ConstantInfo {
 		if (!s.contains("/")) throw new Exception("Malformed Field Reference!");
 		cf.getConstant(class_index).from(s.substring(0, s.lastIndexOf('/')));
 		cf.getConstant(name_and_type_index).from(s.substring(s.lastIndexOf('/') + 1));
+		return this;
+	}
+	
+	@Override
+	public ConstantInfo write(DataOutputStream out) throws IOException {
+		out.writeShort(class_index);
+		out.writeShort(name_and_type_index);
 		return this;
 	}
 }

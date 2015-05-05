@@ -1,6 +1,7 @@
 package com.javaprophet.jasm.constant;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import com.javaprophet.jasm.ClassFile;
 
@@ -25,6 +26,12 @@ public class CMethodType extends ConstantInfo {
 	@Override
 	public ConstantInfo from(String s) throws Exception {
 		cf.getConstant(descriptor_index).from(s);
+		return this;
+	}
+	
+	@Override
+	public ConstantInfo write(DataOutputStream out) throws IOException {
+		out.writeShort(descriptor_index);
 		return this;
 	}
 }

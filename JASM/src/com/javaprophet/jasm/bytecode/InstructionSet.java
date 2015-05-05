@@ -23,6 +23,10 @@ public class InstructionSet {
 		return this;
 	}
 	
+	public byte[] write() {
+		return this.code;
+	}
+	
 	public String toString() {
 		// if (!name.equals("replace")) return "";
 		StringWriter sb = new StringWriter();
@@ -84,7 +88,7 @@ public class InstructionSet {
 					pw.println("bipush " + in.read());
 					break;
 				case 17:
-					pw.println("sipush");
+					pw.println("sipush " + in.readShort());
 					break;
 				case 18:
 					pw.println("ldc " + cf.resolveConstant(in.read()));
@@ -540,7 +544,7 @@ public class InstructionSet {
 					pw.println("jsr " + in.readUnsignedShort());
 					break;
 				case 169:
-					pw.println("ret");
+					pw.println("ret " + in.read());
 					break;
 				case 170:
 					pw.println("tableswitch");

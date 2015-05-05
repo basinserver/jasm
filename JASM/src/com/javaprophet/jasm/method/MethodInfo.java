@@ -1,6 +1,7 @@
 package com.javaprophet.jasm.method;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import com.javaprophet.jasm.ClassFile;
 import com.javaprophet.jasm.attribute.AttributeInfo;
@@ -34,10 +35,25 @@ public class MethodInfo {
 			int name_index = in.readUnsignedShort();
 			String name = ((CUTF8)cf.getConstant(name_index)).utf;
 			if (name.equals("Code")) {
-				code = new Code(mname, cf).read(in);
+				code = new Code(mname, cf).read(name_index, in);
 			}else {
 				ai[i] = new AttributeInfo().read(name_index, in);
 			}
+		}
+		return this;
+	}
+	
+	public MethodInfo write(DataOutputStream out) throws IOException {
+		out.writeShort(access_flags);
+		out.writeShort(name_index);
+		out.writeShort(descriptor_index);
+		out.writeShort(ai.length);
+		if (code != null) {
+			code.write(out);
+		}
+		for (int i = 0; i < ai.length; i++) {
+			if (ai[i] == null) continue;
+			ai[i].write(out);
 		}
 		return this;
 	}

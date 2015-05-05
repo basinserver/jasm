@@ -2,6 +2,7 @@ package com.javaprophet.jasm;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -20,13 +21,16 @@ import com.javaprophet.jasm.constant.CMethodRef;
 import com.javaprophet.jasm.constant.CMethodType;
 import com.javaprophet.jasm.constant.CNameAndType;
 import com.javaprophet.jasm.constant.CString;
-import com.javaprophet.jasm.constant.CType;
 import com.javaprophet.jasm.constant.CUTF8;
 import com.javaprophet.jasm.constant.ConstantInfo;
 import com.javaprophet.jasm.field.FieldInfo;
 import com.javaprophet.jasm.method.MethodInfo;
 
 public class ClassFile {
+	public ClassFile() {
+		
+	}
+	
 	public ClassFile(File f) throws IOException {
 		this(new FileInputStream(f)); // TODO: ensure closed
 	}
@@ -35,11 +39,8 @@ public class ClassFile {
 		this(new ByteArrayInputStream(ba));
 	}
 	
-	private final DataInputStream in;
-	
 	public ClassFile(InputStream in) throws IOException {
-		this.in = new DataInputStream(in);
-		read();
+		read(new DataInputStream(in));
 	}
 	
 	public String getVersion() {
@@ -100,36 +101,70 @@ public class ClassFile {
 	
 	private static final String crlf = System.getProperty("line.separator");
 	
-	public ConstantInfo constuctConstant(CType type, int index, String s) throws Exception {
-		switch (type) {
+	public ConstantInfo reconstuctConstant(ConstantInfo parent, int index, String s) throws Exception {
+		switch (parent.type) {
 		case CLASS:
-			return new CClass(this, index).from(s);
+			CClass ccls = (CClass)new CClass(this, index);
+			ccls.name_index = ((CClass)parent).name_index;
+			return ccls.from(s);
 		case DOUBLE:
-			return new CDouble(this, index).from(s);
+			CDouble cdb = (CDouble)new CDouble(this, index);
+			cdb.dbl = ((CDouble)parent).dbl;
+			return cdb.from(s);
 		case FIELDREF:
-			return new CFieldRef(this, index).from(s);
+			CFieldRef cfr = (CFieldRef)new CFieldRef(this, index);
+			cfr.class_index = ((CFieldRef)parent).class_index;
+			cfr.name_and_type_index = ((CFieldRef)parent).name_and_type_index;
+			return cfr.from(s);
 		case FLOAT:
-			return new CFloat(this, index).from(s);
+			CFloat cf = (CFloat)new CFloat(this, index);
+			cf.flt = ((CFloat)parent).flt;
+			return cf.from(s);
 		case INTEGER:
-			return new CInteger(this, index).from(s);
+			CInteger cint = (CInteger)new CInteger(this, index);
+			cint.integer = ((CInteger)parent).integer;
+			return cint.from(s);
 		case INTERFACEMETHODREF:
-			return new CInterfaceMethodRef(this, index).from(s);
+			CInterfaceMethodRef cimr = (CInterfaceMethodRef)new CInterfaceMethodRef(this, index);
+			cimr.class_index = ((CInterfaceMethodRef)parent).class_index;
+			cimr.name_and_type_index = ((CInterfaceMethodRef)parent).name_and_type_index;
+			return cimr.from(s);
 		case INVOKEDYNAMIC:
-			return new CInvokeDynamic(this, index).from(s);
+			CInvokeDynamic cid = (CInvokeDynamic)new CInvokeDynamic(this, index);
+			cid.bootstrap_method_attr_index = ((CInvokeDynamic)parent).bootstrap_method_attr_index;
+			cid.name_and_type_index = ((CInvokeDynamic)parent).name_and_type_index;
+			return cid.from(s);
 		case LONG:
-			return new CLong(this, index).from(s);
+			CLong cl = (CLong)new CLong(this, index);
+			cl.lng = ((CLong)parent).lng;
+			return cl.from(s);
 		case METHODHANDLE:
-			return new CMethodHandle(this, index).from(s);
+			CMethodHandle cml = (CMethodHandle)new CMethodHandle(this, index);
+			cml.reference_index = ((CMethodHandle)parent).reference_index;
+			cml.reference_type = ((CMethodHandle)parent).reference_type;
+			return cml.from(s);
 		case METHODREF:
-			return new CMethodRef(this, index).from(s);
+			CMethodRef cmr = (CMethodRef)new CMethodRef(this, index);
+			cmr.class_index = ((CMethodRef)parent).class_index;
+			cmr.name_and_type_index = ((CMethodRef)parent).name_and_type_index;
+			return cmr.from(s);
 		case METHODTYPE:
-			return new CMethodType(this, index).from(s);
+			CMethodType cmt = (CMethodType)new CMethodType(this, index);
+			cmt.descriptor_index = ((CMethodType)parent).descriptor_index;
+			return cmt.from(s);
 		case NAMEANDTYPE:
-			return new CNameAndType(this, index).from(s);
+			CNameAndType cnat = (CNameAndType)new CNameAndType(this, index);
+			cnat.name_index = ((CNameAndType)parent).name_index;
+			cnat.descriptor_index = ((CNameAndType)parent).descriptor_index;
+			return cnat.from(s);
 		case STRING:
-			return new CString(this, index).from(s);
+			CString cs = (CString)new CString(this, index);
+			cs.string_index = ((CString)parent).string_index;
+			return cs.from(s);
 		case UTF8:
-			return new CUTF8(this, index).from(s);
+			CUTF8 cu = (CUTF8)new CUTF8(this, index);
+			cu.utf = ((CUTF8)parent).utf;
+			return cu.from(s);
 		default:
 			throw new Exception("Invalid Type!");
 		}
@@ -197,6 +232,7 @@ public class ClassFile {
 	}
 	
 	private String version = null;
+	private int minorVersion = -1, majorVersion = -1;
 	private ConstantInfo[] ci = null;
 	private FieldInfo[] fi = null;
 	private MethodInfo[] mi = null;
@@ -204,13 +240,13 @@ public class ClassFile {
 	private int[] is = null;
 	private int thisClass = -1, superClass = -1, accessFlags = -1;
 	
-	public void read() throws IOException {
+	public void read(DataInputStream in) throws IOException {
 		if (in.read() != 0x000000CA || in.read() != 0x000000FE || in.read() != 0x000000BA || in.read() != 0x000000BE) {
 			throw new IOException("Not a Class File! Magic is not 0xCAFEBABE.");
 		}
-		int minor = in.readUnsignedShort();
-		int major = in.readUnsignedShort();
-		this.version = major + "." + minor;
+		minorVersion = in.readUnsignedShort();
+		majorVersion = in.readUnsignedShort();
+		this.version = majorVersion + "." + minorVersion;
 		int cpc = in.readUnsignedShort();
 		this.ci = new ConstantInfo[cpc];
 		for (int i = 1; i < this.ci.length; i++) {
@@ -266,7 +302,7 @@ public class ClassFile {
 		int ifc = in.readUnsignedShort();
 		this.is = new int[ifc];
 		for (int i = 0; i < ifc; i++) {
-			this.is[i] = in.readUnsignedShort(); // TODO: ?
+			this.is[i] = in.readUnsignedShort();
 		}
 		int fc = in.readUnsignedShort();
 		this.fi = new FieldInfo[fc];
@@ -283,9 +319,85 @@ public class ClassFile {
 		for (int i = 0; i < ac; i++) {
 			this.ai[i] = new AttributeInfo().read(in);
 		}
+		in.close();
 	}
 	
-	public void close() throws IOException {
-		in.close();
+	public void write(DataOutputStream out) throws IOException {
+		out.write(0x000000CA);
+		out.write(0x000000FE);
+		out.write(0x000000BA);
+		out.write(0x000000BE);
+		out.writeShort(minorVersion);
+		out.writeShort(majorVersion);
+		out.writeShort(ci.length);
+		for (int i = 1; i < ci.length; i++) {
+			switch (ci[i].type) {
+			case CLASS:
+				out.write(7);
+				break;
+			case DOUBLE:
+				out.write(6);
+				break;
+			case FIELDREF:
+				out.write(9);
+				break;
+			case FLOAT:
+				out.write(4);
+				break;
+			case INTEGER:
+				out.write(3);
+				break;
+			case INTERFACEMETHODREF:
+				out.write(11);
+				break;
+			case INVOKEDYNAMIC:
+				out.write(18);
+				break;
+			case LONG:
+				out.write(5);
+				break;
+			case METHODHANDLE:
+				out.write(15);
+				break;
+			case METHODREF:
+				out.write(10);
+				break;
+			case METHODTYPE:
+				out.write(16);
+				break;
+			case NAMEANDTYPE:
+				out.write(12);
+				break;
+			case STRING:
+				out.write(8);
+				break;
+			case UTF8:
+				out.write(1);
+				break;
+			default:
+				break;
+			}
+			ci[i].write(out);
+		}
+		out.writeShort(accessFlags);
+		out.writeShort(thisClass);
+		out.writeShort(superClass);
+		out.writeShort(is.length);
+		for (int i = 0; i < is.length; i++) {
+			out.writeShort(is[i]);
+		}
+		out.writeShort(fi.length);
+		for (int i = 0; i < this.fi.length; i++) {
+			fi[i].write(out);
+		}
+		out.writeShort(mi.length);
+		for (int i = 0; i < mi.length; i++) {
+			mi[i].write(out);
+		}
+		out.writeShort(ai.length);
+		for (int i = 0; i < ai.length; i++) {
+			ai[i].write(out);
+		}
+		out.close();
 	}
 }
