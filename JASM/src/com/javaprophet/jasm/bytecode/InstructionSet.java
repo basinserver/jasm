@@ -1,7 +1,9 @@
 package com.javaprophet.jasm.bytecode;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -26,7 +28,9 @@ public class InstructionSet {
 		return this.code;
 	}
 	
-	public void fromString(String s) {
+	public void fromString(String s) throws IOException {
+		ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		DataOutputStream out = new DataOutputStream(bout);
 		Scanner in = new Scanner(s);
 		while (in.hasNextLine()) {
 			String line = in.nextLine();
@@ -35,8 +39,143 @@ public class InstructionSet {
 			if (line.length() == 0) continue;
 			String[] args = line.split(" ");
 			if (args.length == 0) continue;
-			
+			for (int i = 0; i < opcodes.length; i++) {
+				if (opcodes[i].equals(args[0])) {
+					out.write(i);
+				}else continue;
+				// TODO: syntax checking
+				if (args[0].equals("bipush")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("sipush")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("ldc")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("ldc_w")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("ldc2_w")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("iload")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("lload")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("fload")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("dload")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("aload")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("istore")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("lstore")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("fstore")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("dstore")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("astore")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("iinc")) {
+					out.write(Integer.parseInt(args[1]));
+					out.write(Integer.parseInt(args[2]));
+				}else if (args[0].equals("ifeq")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("ifne")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("iflt")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("ifge")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("ifgt")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("ifle")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("if_icmpeq")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("if_icmpne")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("if_icmplt")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("if_icmpge")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("if_icmpgt")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("if_icmple")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("if_icmpeq")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("if_acmpne")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("goto")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("jsr")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("ret")) {
+					out.write(Integer.parseInt(args[1]));
+				}else if (args[0].equals("tableswitch")) {
+				}else if (args[0].equals("lookupswitch")) {
+				}else if (args[0].equals("getstatic")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("putstatic")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("getfield")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("putfield")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("invokevirtual")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("invokespecial")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("invokestatic")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("invokeinterface")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("invokedynamic")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("new")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("newarray")) {
+					int r = 0;
+					if (args[1].equalsIgnoreCase("T_BOOLEAN")) {
+						r = 4;
+					}else if (args[1].equalsIgnoreCase("T_CHAR")) {
+						r = 5;
+					}else if (args[1].equalsIgnoreCase("T_FLOAT")) {
+						r = 6;
+					}else if (args[1].equalsIgnoreCase("T_DOUBLE")) {
+						r = 7;
+					}else if (args[1].equalsIgnoreCase("T_BYTE")) {
+						r = 8;
+					}else if (args[1].equalsIgnoreCase("T_SHORT")) {
+						r = 9;
+					}else if (args[1].equalsIgnoreCase("T_INT")) {
+						r = 10;
+					}else if (args[1].equalsIgnoreCase("T_LONG")) {
+						r = 11;
+					}else {
+						// TODO: invalid arg
+					}
+					out.write(r);
+				}else if (args[0].equals("anewarray")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("checkcast")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("instanceof")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("multianewarray")) {
+					out.writeShort(Integer.parseInt(args[1]));
+					out.write(Integer.parseInt(args[2]));
+				}else if (args[0].equals("ifnull")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("ifnonnull")) {
+					out.writeShort(Integer.parseInt(args[1]));
+				}else if (args[0].equals("goto_w")) {
+					out.writeInt(Integer.parseInt(args[1]));
+				}else if (args[0].equals("jsr_w")) {
+					out.writeInt(Integer.parseInt(args[1]));
+				}
+			}
 		}
+		this.code = bout.toByteArray();
 	}
 	
 	private static final String[] opcodes = new String[]{//
