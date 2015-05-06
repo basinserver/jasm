@@ -32,8 +32,10 @@ public class ClassFile {
 		
 	}
 	
+	private FileInputStream tfin;
+	
 	public ClassFile(File f) throws IOException {
-		this(new FileInputStream(f)); // TODO: ensure closed
+		this(new FileInputStream(f), true);
 	}
 	
 	public ClassFile(byte[] ba) throws IOException {
@@ -41,7 +43,11 @@ public class ClassFile {
 	}
 	
 	public ClassFile(InputStream in) throws IOException {
-		read(new DataInputStream(in));
+		this(in, false);
+	}
+	
+	public ClassFile(InputStream in, boolean close) throws IOException {
+		read(new DataInputStream(in), close);
 	}
 	
 	public String getVersion() {
@@ -242,6 +248,10 @@ public class ClassFile {
 	private int thisClass = -1, superClass = -1, accessFlags = -1;
 	
 	public void read(DataInputStream in) throws IOException {
+		read(in, false);
+	}
+	
+	public void read(DataInputStream in, boolean close) throws IOException {
 		if (in.read() != 0x000000CA || in.read() != 0x000000FE || in.read() != 0x000000BA || in.read() != 0x000000BE) {
 			throw new IOException("Not a Class File! Magic is not 0xCAFEBABE.");
 		}
@@ -329,7 +339,9 @@ public class ClassFile {
 		for (int i = 0; i < ac; i++) {
 			this.ai[i] = new AttributeInfo().read(in);
 		}
-		in.close();
+		if (close) {
+			in.close();
+		}
 	}
 	
 	public boolean isPublic() {
