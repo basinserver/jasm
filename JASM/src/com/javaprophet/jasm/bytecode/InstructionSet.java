@@ -24,6 +24,119 @@ public class InstructionSet {
 		return this;
 	}
 	
+	public static int opcodeLength(String op) {
+		if (op.equals("bipush")) {
+			return 2;
+		}else if (op.equals("sipush")) {
+			return 3;
+		}else if (op.equals("ldc")) {
+			return 2;
+		}else if (op.equals("ldc_w")) {
+			return 3;
+		}else if (op.equals("ldc2_w")) {
+			return 3;
+		}else if (op.equals("iload")) {
+			return 2;
+		}else if (op.equals("lload")) {
+			return 2;
+		}else if (op.equals("fload")) {
+			return 2;
+		}else if (op.equals("dload")) {
+			return 2;
+		}else if (op.equals("aload")) {
+			return 2;
+		}else if (op.equals("istore")) {
+			return 2;
+		}else if (op.equals("lstore")) {
+			return 2;
+		}else if (op.equals("fstore")) {
+			return 2;
+		}else if (op.equals("dstore")) {
+			return 2;
+		}else if (op.equals("astore")) {
+			return 2;
+		}else if (op.equals("iinc")) {
+			return 3;
+		}else if (op.equals("ifeq")) {
+			return 3;
+		}else if (op.equals("ifne")) {
+			return 3;
+		}else if (op.equals("iflt")) {
+			return 3;
+		}else if (op.equals("ifge")) {
+			return 3;
+		}else if (op.equals("ifgt")) {
+			return 3;
+		}else if (op.equals("ifle")) {
+			return 3;
+		}else if (op.equals("if_icmpeq")) {
+			return 3;
+		}else if (op.equals("if_icmpne")) {
+			return 3;
+		}else if (op.equals("if_icmplt")) {
+			return 3;
+		}else if (op.equals("if_icmpge")) {
+			return 3;
+		}else if (op.equals("if_icmpgt")) {
+			return 3;
+		}else if (op.equals("if_icmple")) {
+			return 3;
+		}else if (op.equals("if_icmpeq")) {
+			return 3;
+		}else if (op.equals("if_acmpne")) {
+			return 3;
+		}else if (op.equals("goto")) {
+			return 3;
+		}else if (op.equals("jsr")) {
+			return 3;
+		}else if (op.equals("ret")) {
+			return 2;
+		}else if (op.equals("tableswitch")) {// TODO
+		}else if (op.equals("lookupswitch")) {// TODO
+		}else if (op.equals("getstatic")) {
+			return 3;
+		}else if (op.equals("putstatic")) {
+			return 3;
+		}else if (op.equals("getfield")) {
+			return 3;
+		}else if (op.equals("putfield")) {
+			return 3;
+		}else if (op.equals("invokevirtual")) {
+			return 3;
+		}else if (op.equals("invokespecial")) {
+			return 3;
+		}else if (op.equals("invokestatic")) {
+			return 3;
+		}else if (op.equals("invokeinterface")) {
+			return 3;
+		}else if (op.equals("invokedynamic")) {
+			return 3;
+		}else if (op.equals("new")) {
+			return 3;
+		}else if (op.equals("newarray")) {
+			return 2;
+		}else if (op.equals("anewarray")) {
+			return 3;
+		}else if (op.equals("checkcast")) {
+			return 3;
+		}else if (op.equals("instanceof")) {
+			return 3;
+		}else if (op.equals("multianewarray")) {
+			return 4;
+		}else if (op.equals("ifnull")) {
+			return 3;
+		}else if (op.equals("ifnonnull")) {
+			return 3;
+		}else if (op.equals("goto_w")) {
+			return 5;
+		}else if (op.equals("jsr_w")) {
+			return 5;
+		}else {
+			return 1;
+		}
+		return 0;
+	}
+	
 	public byte[] write() {
 		return this.code;
 	}
@@ -32,6 +145,7 @@ public class InstructionSet {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		DataOutputStream out = new DataOutputStream(bout);
 		Scanner in = new Scanner(s);
+		int ri = 0;
 		while (in.hasNextLine()) {
 			String line = in.nextLine();
 			if (line.contains("//")) line = line.substring(0, line.indexOf("//"));
@@ -618,7 +732,8 @@ public class InstructionSet {
 		// if (!name.equals("replace")) return "";
 		StringWriter sb = new StringWriter();
 		PrintWriter pw = new PrintWriter(sb);
-		DataInputStream in = new DataInputStream(new ByteArrayInputStream(code));
+		CountInputStream cin = new CountInputStream(new ByteArrayInputStream(code));
+		DataInputStream in = new DataInputStream(cin);
 		try {
 			while (in.available() > 0) {
 				int bc = in.read();
@@ -672,46 +787,60 @@ public class InstructionSet {
 					pw.println("iinc " + in.read() + " " + in.read());
 					break;
 				case 153:
-					pw.println("ifeq " + in.readShort());
+					int ptr = in.readShort();
+					pw.println("ifeq " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 154:
-					pw.println("ifne " + in.readShort());
+					ptr = in.readShort();
+					pw.println("ifne " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 155:
-					pw.println("iflt " + in.readShort());
+					ptr = in.readShort();
+					pw.println("iflt " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 156:
-					pw.println("ifge " + in.readShort());
+					ptr = in.readShort();
+					pw.println("ifge " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 157:
-					pw.println("ifgt " + in.readShort());
+					ptr = in.readShort();
+					pw.println("ifgt " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 158:
-					pw.println("ifle " + in.readShort());
+					ptr = in.readShort();
+					pw.println("ifle " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 159:
-					pw.println("if_icmpeq " + in.readShort());
+					ptr = in.readShort();
+					pw.println("if_icmpeq " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 160:
-					pw.println("if_icmpne " + in.readShort());
+					ptr = in.readShort();
+					pw.println("if_icmpne " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 161:
-					pw.println("if_icmplt " + in.readShort());
+					ptr = in.readShort();
+					pw.println("if_icmplt " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 162:
-					pw.println("if_icmpge " + in.readShort());
+					ptr = in.readShort();
+					pw.println("if_icmpge " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 163:
-					pw.println("if_icmpgt " + in.readShort());
+					ptr = in.readShort();
+					pw.println("if_icmpgt " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 164:
-					pw.println("if_icmple " + in.readShort());
+					ptr = in.readShort();
+					pw.println("if_icmple " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 165:
-					pw.println("if_acmpeq " + in.readShort());
+					ptr = in.readShort();
+					pw.println("if_acmpeq " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 166:
-					pw.println("if_acmpne " + in.readShort());
+					ptr = in.readShort();
+					pw.println("if_acmpne " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 167:
 					pw.println("goto " + in.readUnsignedShort());

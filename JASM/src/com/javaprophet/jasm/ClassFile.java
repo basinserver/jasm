@@ -21,6 +21,7 @@ import com.javaprophet.jasm.constant.CMethodRef;
 import com.javaprophet.jasm.constant.CMethodType;
 import com.javaprophet.jasm.constant.CNameAndType;
 import com.javaprophet.jasm.constant.CString;
+import com.javaprophet.jasm.constant.CType;
 import com.javaprophet.jasm.constant.CUTF8;
 import com.javaprophet.jasm.constant.ConstantInfo;
 import com.javaprophet.jasm.field.FieldInfo;
@@ -250,6 +251,9 @@ public class ClassFile {
 		int cpc = in.readUnsignedShort();
 		this.ci = new ConstantInfo[cpc];
 		for (int i = 1; i < this.ci.length; i++) {
+			if (i == 49) {
+				System.nanoTime();
+			}
 			int type = in.read();
 			switch (type) {
 			case 1:
@@ -263,9 +267,13 @@ public class ClassFile {
 				break;
 			case 5:
 				this.ci[i] = new CLong(this, i).read(in);
+				i++;
+				this.ci[i] = this.ci[i - 1];
 				break;
 			case 6:
 				this.ci[i] = new CDouble(this, i).read(in);
+				i++;
+				this.ci[i] = this.ci[i - 1];
 				break;
 			case 7:
 				this.ci[i] = new CClass(this, i).read(in);
@@ -293,6 +301,8 @@ public class ClassFile {
 				break;
 			case 18:
 				this.ci[i] = new CInvokeDynamic(this, i).read(in);
+				break;
+			default:
 				break;
 			}
 		}
@@ -322,6 +332,114 @@ public class ClassFile {
 		in.close();
 	}
 	
+	public boolean isPublic() {
+		return (accessFlags & 0x0001) == 0x0001;
+	}
+	
+	public void setPublic(boolean n) {
+		boolean c = isPublic();
+		if (c && !n) {
+			accessFlags = accessFlags - 0x0001;
+		}else if (!c && n) {
+			accessFlags = accessFlags + 0x0001;
+		}
+	}
+	
+	public boolean isFinal() {
+		return (accessFlags & 0x0010) == 0x0010;
+	}
+	
+	public void setFinal(boolean n) {
+		boolean c = isFinal();
+		if (c && !n) {
+			accessFlags = accessFlags - 0x0010;
+		}else if (!c && n) {
+			accessFlags = accessFlags + 0x0010;
+		}
+	}
+	
+	public boolean isSuper() {
+		return (accessFlags & 0x0020) == 0x0020;
+	}
+	
+	public void setSuper(boolean n) {
+		boolean c = isSuper();
+		if (c && !n) {
+			accessFlags = accessFlags - 0x0020;
+		}else if (!c && n) {
+			accessFlags = accessFlags + 0x0020;
+		}
+	}
+	
+	public boolean isInterface() {
+		return (accessFlags & 0x0200) == 0x0200;
+	}
+	
+	public void setInterface(boolean n) {
+		boolean c = isInterface();
+		if (c && !n) {
+			accessFlags = accessFlags - 0x0200;
+		}else if (!c && n) {
+			accessFlags = accessFlags + 0x0200;
+		}
+	}
+	
+	public boolean isAbstract() {
+		return (accessFlags & 0x0400) == 0x0400;
+	}
+	
+	public void setAbstract(boolean n) {
+		boolean c = isAbstract();
+		if (c && !n) {
+			accessFlags = accessFlags - 0x0400;
+		}else if (!c && n) {
+			accessFlags = accessFlags + 0x0400;
+		}
+	}
+	
+	public boolean isSynthetic() {
+		return (accessFlags & 0x1000) == 0x1000;
+	}
+	
+	public void isSynthetic(boolean n) {
+		boolean c = isSynthetic();
+		if (c && !n) {
+			accessFlags = accessFlags - 0x1000;
+		}else if (!c && n) {
+			accessFlags = accessFlags + 0x1000;
+		}
+	}
+	
+	public boolean isAnnotation() {
+		return (accessFlags & 0x2000) == 0x2000;
+	}
+	
+	public void setAnnotation(boolean n) {
+		boolean c = isAnnotation();
+		if (c && !n) {
+			accessFlags = accessFlags - 0x2000;
+		}else if (!c && n) {
+			accessFlags = accessFlags + 0x2000;
+		}
+	}
+	
+	public boolean isEnum() {
+		return (accessFlags & 0x4000) == 0x4000;
+	}
+	
+	public void setEnum(boolean n) {
+		boolean c = isEnum();
+		if (c && !n) {
+			accessFlags = accessFlags - 0x4000;
+		}else if (!c && n) {
+			accessFlags = accessFlags + 0x4000;
+		}
+	}
+	
+	public void setAccessFlags(int accessFlags) {
+		this.accessFlags = accessFlags;
+	}
+	
 	public void write(DataOutputStream out) throws IOException {
 		out.write(0x000000CA);
 		out.write(0x000000FE);
@@ -330,7 +448,16 @@ public class ClassFile {
 		out.writeShort(minorVersion);
 		out.writeShort(majorVersion);
 		out.writeShort(ci.length);
+		boolean lb = false;
 		for (int i = 1; i < ci.length; i++) {
+			if (ci[i].type == CType.LONG || ci[i].type == CType.DOUBLE) {
+				if (!lb) {
+					lb = true;
+				}else {
+					lb = false;
+					continue;
+				}
+			}
 			switch (ci[i].type) {
 			case CLASS:
 				out.write(7);
