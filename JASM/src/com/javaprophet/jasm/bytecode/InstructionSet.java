@@ -153,6 +153,13 @@ public class InstructionSet {
 			if (line.length() == 0) continue;
 			String[] args = line.split(" ");
 			if (args.length == 0) continue;
+			boolean wide = false;
+			if (args[0].equals("wide")) {
+				wide = true;
+				String[] na = new String[args.length - 1];
+				System.arraycopy(args, 1, na, 0, na.length);
+				args = na;
+			}
 			for (int i = 0; i < opcodes.length; i++) {
 				if (opcodes[i].equals(args[0])) {
 					out.write(i);
@@ -169,28 +176,42 @@ public class InstructionSet {
 				}else if (args[0].equals("ldc2_w")) {
 					out.writeShort(Integer.parseInt(args[1]));
 				}else if (args[0].equals("iload")) {
-					out.write(Integer.parseInt(args[1]));
+					if (wide) out.writeShort(Integer.parseInt(args[1]));
+					else out.write(Integer.parseInt(args[1]));
 				}else if (args[0].equals("lload")) {
-					out.write(Integer.parseInt(args[1]));
+					if (wide) out.writeShort(Integer.parseInt(args[1]));
+					else out.write(Integer.parseInt(args[1]));
 				}else if (args[0].equals("fload")) {
 					out.write(Integer.parseInt(args[1]));
 				}else if (args[0].equals("dload")) {
-					out.write(Integer.parseInt(args[1]));
+					if (wide) out.writeShort(Integer.parseInt(args[1]));
+					else out.write(Integer.parseInt(args[1]));
 				}else if (args[0].equals("aload")) {
-					out.write(Integer.parseInt(args[1]));
+					if (wide) out.writeShort(Integer.parseInt(args[1]));
+					else out.write(Integer.parseInt(args[1]));
 				}else if (args[0].equals("istore")) {
-					out.write(Integer.parseInt(args[1]));
+					if (wide) out.writeShort(Integer.parseInt(args[1]));
+					else out.write(Integer.parseInt(args[1]));
 				}else if (args[0].equals("lstore")) {
-					out.write(Integer.parseInt(args[1]));
+					if (wide) out.writeShort(Integer.parseInt(args[1]));
+					else out.write(Integer.parseInt(args[1]));
 				}else if (args[0].equals("fstore")) {
-					out.write(Integer.parseInt(args[1]));
+					if (wide) out.writeShort(Integer.parseInt(args[1]));
+					else out.write(Integer.parseInt(args[1]));
 				}else if (args[0].equals("dstore")) {
-					out.write(Integer.parseInt(args[1]));
+					if (wide) out.writeShort(Integer.parseInt(args[1]));
+					else out.write(Integer.parseInt(args[1]));
 				}else if (args[0].equals("astore")) {
-					out.write(Integer.parseInt(args[1]));
+					if (wide) out.writeShort(Integer.parseInt(args[1]));
+					else out.write(Integer.parseInt(args[1]));
 				}else if (args[0].equals("iinc")) {
-					out.write(Integer.parseInt(args[1]));
-					out.write(Integer.parseInt(args[2]));
+					if (wide) {
+						out.writeShort(Integer.parseInt(args[1]));
+						out.writeShort(Integer.parseInt(args[2]));
+					}else {
+						out.write(Integer.parseInt(args[1]));
+						out.write(Integer.parseInt(args[2]));
+					}
 				}else if (args[0].equals("ifeq")) {
 					out.writeShort(Integer.parseInt(args[1]));
 				}else if (args[0].equals("ifne")) {
@@ -224,7 +245,8 @@ public class InstructionSet {
 				}else if (args[0].equals("jsr")) {
 					out.writeShort(Integer.parseInt(args[1]));
 				}else if (args[0].equals("ret")) {
-					out.write(Integer.parseInt(args[1]));
+					if (wide) out.writeShort(Integer.parseInt(args[1]));
+					else out.write(Integer.parseInt(args[1]));
 				}else if (args[0].equals("tableswitch")) {
 				}else if (args[0].equals("lookupswitch")) {
 				}else if (args[0].equals("getstatic")) {
@@ -737,6 +759,12 @@ public class InstructionSet {
 		try {
 			while (in.available() > 0) {
 				int bc = in.read();
+				boolean wide = false;
+				if (bc == 196) { // wide
+					pw.print("wide ");
+					bc = in.read();
+					wide = true;
+				}
 				switch (bc) {
 				case 16:
 					pw.println("bipush " + in.read());
@@ -754,37 +782,37 @@ public class InstructionSet {
 					pw.println("ldc2_w " + cf.resolveConstant(in.readUnsignedShort()));
 					break;
 				case 21:
-					pw.println("iload " + in.read());
+					pw.println("iload " + (wide ? in.readUnsignedShort() : in.read()));
 					break;
 				case 22:
-					pw.println("lload " + in.read());
+					pw.println("lload " + (wide ? in.readUnsignedShort() : in.read()));
 					break;
 				case 23:
-					pw.println("fload " + in.read());
+					pw.println("fload " + (wide ? in.readUnsignedShort() : in.read()));
 					break;
 				case 24:
-					pw.println("dload " + in.read());
+					pw.println("dload " + (wide ? in.readUnsignedShort() : in.read()));
 					break;
 				case 25:
-					pw.println("aload " + in.read());
+					pw.println("aload " + (wide ? in.readUnsignedShort() : in.read()));
 					break;
 				case 54:
-					pw.println("istore " + in.read());
+					pw.println("istore " + (wide ? in.readUnsignedShort() : in.read()));
 					break;
 				case 55:
-					pw.println("lstore " + in.read());
+					pw.println("lstore " + (wide ? in.readUnsignedShort() : in.read()));
 					break;
 				case 56:
-					pw.println("fstore " + in.read());
+					pw.println("fstore " + (wide ? in.readUnsignedShort() : in.read()));
 					break;
 				case 57:
-					pw.println("dstore " + in.read());
+					pw.println("dstore " + (wide ? in.readUnsignedShort() : in.read()));
 					break;
 				case 58:
-					pw.println("astore " + in.read());
+					pw.println("astore " + (wide ? in.readUnsignedShort() : in.read()));
 					break;
 				case 132:
-					pw.println("iinc " + in.read() + " " + in.read());
+					pw.println("iinc " + (wide ? in.readUnsignedShort() : in.read()) + " " + (wide ? in.readUnsignedShort() : in.read()));
 					break;
 				case 153:
 					int ptr = in.readShort();
@@ -843,13 +871,15 @@ public class InstructionSet {
 					pw.println("if_acmpne " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 167:
-					pw.println("goto " + in.readUnsignedShort());
+					ptr = in.readShort();
+					pw.println("goto " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 168:
-					pw.println("jsr " + in.readUnsignedShort());
+					ptr = in.readShort();
+					pw.println("jsr " + ptr + " // points to " + (cin.getCount() - 3 + ptr));
 					break;
 				case 169:
-					pw.println("ret " + in.read());
+					pw.println("ret " + (wide ? in.readShort() : in.read()));
 					break;
 				case 170:
 					pw.println("tableswitch");

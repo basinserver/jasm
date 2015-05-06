@@ -401,7 +401,7 @@ public class ClassFile {
 		return (accessFlags & 0x1000) == 0x1000;
 	}
 	
-	public void isSynthetic(boolean n) {
+	public void setSynthetic(boolean n) {
 		boolean c = isSynthetic();
 		if (c && !n) {
 			accessFlags = accessFlags - 0x1000;
