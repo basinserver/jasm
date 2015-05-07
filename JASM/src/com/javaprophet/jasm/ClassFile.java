@@ -54,6 +54,12 @@ public class ClassFile {
 		return version;
 	}
 	
+	public void setVersion(String s) {
+		if (!s.contains(".")) throw new IllegalArgumentException("No dot!");
+		this.majorVersion = Integer.parseInt(s.substring(0, s.indexOf(".")));
+		this.minorVersion = Integer.parseInt(s.substring(s.indexOf(".") + 1));
+	}
+	
 	public ConstantInfo[] getConstantPool() {
 		return ci;
 	}
