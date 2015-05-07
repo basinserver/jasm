@@ -88,7 +88,7 @@ public class JarFile {
 				byte[] buf = new byte[1024];
 				int i = 1;
 				while (i > 0) {
-					i = in.read(buf, 0, i);
+					i = jin.read(buf, 0, i);
 					if (i > 0) {
 						bout.write(buf, 0, i);
 					}
