@@ -75,6 +75,21 @@ public class JarFile {
 		read(in);
 	}
 	
+	public String toString() {
+		String mc = getMainClass();
+		if (mc != null) {
+			mc = mc.replace(".", "/");
+			for (ClassFile cf : cfs) {
+				if (cf.getClassName().equals(mc)) {
+					return cf.getClassName();
+				}
+			}
+		}else if (url != null) {
+			return url.toString();
+		}
+		return "Jar File";
+	}
+	
 	public void read(InputStream in) throws IOException {
 		ZipInputStream jin = new ZipInputStream(in);// not jar, so we can read manifest directly
 		ZipEntry entry;
