@@ -537,6 +537,5 @@ public class ClassFile {
 		for (int i = 0; i < ai.length; i++) {
 			ai[i].write(out);
 		}
-		out.close();
 	}
 }
