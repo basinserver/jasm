@@ -1,13 +1,16 @@
 package com.javaprophet.jasm;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import com.javaprophet.jasm.reflection.ReflectionClassLoader;
@@ -95,5 +98,22 @@ public class JarFile {
 		}
 		this.cfs = tcfs.toArray(new ClassFile[]{});
 		jin.close();
+	}
+	
+	public void write(OutputStream out) throws IOException {
+		JarOutputStream jout = new JarOutputStream(out);
+		for (String s : resources.keySet()) {
+			jout.putNextEntry(new ZipEntry(s));
+			jout.write(resources.get(s));
+			jout.closeEntry();
+		}
+		for (ClassFile cf : cfs) {
+			String name = cf.getClassName() + ".class";
+			jout.putNextEntry(new ZipEntry(name));
+			DataOutputStream dout = new DataOutputStream(jout);
+			cf.write(dout);
+			jout.closeEntry();
+		}
+		jout.close();
 	}
 }
