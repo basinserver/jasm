@@ -191,6 +191,14 @@ public class ClassFile {
 		return (String)resolveConstant(cref, resolve, true, false);
 	}
 	
+	public static String escape(String s) {
+		return s.replace("\\", "\\\\").replace(new String(new byte[]{0x0A}), "\\r").replace(new String(new byte[]{0x0D}), "\\n");
+	}
+	
+	public static String inscape(String s) {
+		return s.replace("\\\\", "\\").replace("\\r", new String(new byte[]{0x0A})).replace("\\n", new String(new byte[]{0x0D}));
+	}
+	
 	private Object resolveConstant(int cref, boolean resolve, boolean base, boolean sw) {
 		ConstantInfo ci = getConstant(cref);
 		Object res = null;
@@ -221,7 +229,7 @@ public class ClassFile {
 		}else if (ci instanceof CString) {
 			res = resolveConstant(((CString)ci).string_index, resolve, false, false);
 		}else if (ci instanceof CUTF8) {
-			res = ((CUTF8)ci).utf;
+			res = escape(((CUTF8)ci).utf);
 		}
 		if (resolve && base) {
 			String ress = (String)res;

@@ -27,7 +27,7 @@ public class CUTF8 extends ConstantInfo {
 	
 	@Override
 	public ConstantInfo from(String s) throws Exception {
-		this.utf = s;
+		this.utf = cf.inscape(s);
 		return this;
 	}
 	
