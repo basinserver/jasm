@@ -6,6 +6,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import com.javaprophet.jasm.ClassFile;
 import com.javaprophet.jasm.attribute.AttributeInfo;
+import com.javaprophet.jasm.constant.CUTF8;
 
 public class Code {
 	private final ClassFile cf;
@@ -21,6 +22,7 @@ public class Code {
 	public AttributeInfo[] ai = null;
 	public InstructionSet code = null;
 	public int name_index = -1;
+	public StackMapTable smt = null;
 	
 	public Code read(int name_index, DataInputStream in) throws IOException {
 		this.name_index = name_index;
@@ -38,7 +40,13 @@ public class Code {
 		int ac = in.readUnsignedShort();
 		ai = new AttributeInfo[ac];
 		for (int i = 0; i < ai.length; i++) {
-			ai[i] = new AttributeInfo().read(in);
+			int ni2 = in.readUnsignedShort();
+			String name = ((CUTF8)cf.getConstant(ni2)).utf;
+			if (name.equals("StackMapTable")) {
+				smt = new StackMapTable(this, cf).read(ni2, in);
+			}else {
+				ai[i] = new AttributeInfo().read(ni2, in);
+			}
 		}
 		return this;
 	}

@@ -192,7 +192,6 @@ public class MethodInfo {
 		accessFlags = in.readUnsignedShort();
 		name_index = in.readUnsignedShort();
 		String mname = ((CUTF8)cf.getConstant(name_index)).utf;
-		
 		descriptor_index = in.readUnsignedShort();
 		int ac = in.readUnsignedShort();
 		ai = new AttributeInfo[ac];
