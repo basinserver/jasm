@@ -1,0 +1,60 @@
+package com.protryon.jasm;
+
+import com.protryon.jasm.instruction.Instruction;
+import com.protryon.jasm.instruction.psuedoinstructions.Label;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+
+public class Method {
+
+    public String name;
+    public MethodDescriptor descriptor;
+    public boolean isPublic = false;
+    public boolean isPrivate = false;
+    public boolean isProtected = false;
+    public boolean isStatic = false;
+    public boolean isFinal = false;
+    public boolean isSynchronized = false;
+    public boolean isBridge = false;
+    public boolean isVarargs = false;
+    public boolean isNative = false;
+    public boolean isAbstract = false;
+    public boolean isStrict = false;
+    public boolean isSynthetic = false;
+
+    // set for created methods in things like stdlib or unincluded libs
+    public boolean isDummy = false;
+
+    public ArrayList<Local> locals = new ArrayList<>();
+    public LinkedList<Instruction> code = new LinkedList<>();
+    public LinkedHashMap<String, Label> labels = new LinkedHashMap<>();
+
+    public Local getOrMakeLocal(int index) {
+        if (locals.size() <= index || locals.get(index) == null) {
+            Local local = new Local(this, index);
+            while (locals.size() <= index) {
+                locals.add(null);
+            }
+            locals.set(index, local);
+            return local;
+        }
+        return locals.get(index);
+    }
+
+    public Label getOrMakeLabel(String name) {
+        if (labels.containsKey(name)) {
+            return labels.get(name);
+        }
+        Label label = new Label(name);
+        labels.put(name, label);
+        return label;
+    }
+
+    public Method(String name, MethodDescriptor descriptor) {
+        this.name = name;
+        this.descriptor = descriptor;
+    }
+
+}

@@ -1,0 +1,2737 @@
+{
+  "aaload": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index"
+    ],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "aaload",
+        "opcode": "50"
+      }
+    ]
+  },
+  "aastore": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index",
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "aastore",
+        "opcode": "83"
+      }
+    ]
+  },
+  "aconst_null": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "aconst_null",
+        "opcode": "1"
+      }
+    ]
+  },
+  "aload": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "objectref"
+    ],
+    "forms": [
+      {
+        "name": "aload",
+        "opcode": "25"
+      }
+    ]
+  },
+  "aload_": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [
+      "objectref"
+    ],
+    "forms": [
+      {
+        "name": "aload_0",
+        "opcode": "42"
+      },
+      {
+        "name": "aload_1",
+        "opcode": "43"
+      },
+      {
+        "name": "aload_2",
+        "opcode": "44"
+      },
+      {
+        "name": "aload_3",
+        "opcode": "45"
+      }
+    ]
+  },
+  "anewarray": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": [
+      "count"
+    ],
+    "pushed": [
+      "arrayref"
+    ],
+    "forms": [
+      {
+        "name": "anewarray",
+        "opcode": "189"
+      }
+    ]
+  },
+  "areturn": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "objectref"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "areturn",
+        "opcode": "176"
+      }
+    ]
+  },
+  "arraylength": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref"
+    ],
+    "pushed": [
+      "length"
+    ],
+    "forms": [
+      {
+        "name": "arraylength",
+        "opcode": "190"
+      }
+    ]
+  },
+  "astore": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      }
+    ],
+    "popped": [
+      "objectref"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "astore",
+        "opcode": "58"
+      }
+    ]
+  },
+  "astore_": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "objectref"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "astore_0",
+        "opcode": "75"
+      },
+      {
+        "name": "astore_1",
+        "opcode": "76"
+      },
+      {
+        "name": "astore_2",
+        "opcode": "77"
+      },
+      {
+        "name": "astore_3",
+        "opcode": "78"
+      }
+    ]
+  },
+  "athrow": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "objectref"
+    ],
+    "pushed": [
+      "objectref"
+    ],
+    "forms": [
+      {
+        "name": "athrow",
+        "opcode": "191"
+      }
+    ]
+  },
+  "baload": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index"
+    ],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "baload",
+        "opcode": "51"
+      }
+    ]
+  },
+  "bastore": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index",
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "bastore",
+        "opcode": "84"
+      }
+    ]
+  },
+  "bipush": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "byte",
+        "width": 1,
+        "type": "byte"
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "bipush",
+        "opcode": "16"
+      }
+    ]
+  },
+  "caload": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index"
+    ],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "caload",
+        "opcode": "52"
+      }
+    ]
+  },
+  "castore": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index",
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "castore",
+        "opcode": "85"
+      }
+    ]
+  },
+  "checkcast": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": [
+      "objectref"
+    ],
+    "pushed": [
+      "objectref"
+    ],
+    "forms": [
+      {
+        "name": "checkcast",
+        "opcode": "192"
+      }
+    ]
+  },
+  "d2f": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "d2f",
+        "opcode": "144"
+      }
+    ]
+  },
+  "d2i": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "d2i",
+        "opcode": "142"
+      }
+    ]
+  },
+  "d2l": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "d2l",
+        "opcode": "143"
+      }
+    ]
+  },
+  "dadd": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "dadd",
+        "opcode": "99"
+      }
+    ]
+  },
+  "daload": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index"
+    ],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "daload",
+        "opcode": "49"
+      }
+    ]
+  },
+  "dastore": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index",
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "dastore",
+        "opcode": "82"
+      }
+    ]
+  },
+  "dcmp": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "dcmpg",
+        "opcode": "152"
+      },
+      {
+        "name": "dcmpl",
+        "opcode": "151"
+      }
+    ]
+  },
+  "dconst_": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [
+      "d"
+    ],
+    "forms": [
+      {
+        "name": "dconst_0",
+        "opcode": "14"
+      },
+      {
+        "name": "dconst_1",
+        "opcode": "15"
+      }
+    ]
+  },
+  "ddiv": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "ddiv",
+        "opcode": "111"
+      }
+    ]
+  },
+  "dload": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "dload",
+        "opcode": "24"
+      }
+    ]
+  },
+  "dload_": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "dload_0",
+        "opcode": "38"
+      },
+      {
+        "name": "dload_1",
+        "opcode": "39"
+      },
+      {
+        "name": "dload_2",
+        "opcode": "40"
+      },
+      {
+        "name": "dload_3",
+        "opcode": "41"
+      }
+    ]
+  },
+  "dmul": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "dmul",
+        "opcode": "107"
+      }
+    ]
+  },
+  "dneg": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "dneg",
+        "opcode": "119"
+      }
+    ]
+  },
+  "drem": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "drem",
+        "opcode": "115"
+      }
+    ]
+  },
+  "dreturn": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "dreturn",
+        "opcode": "175"
+      }
+    ]
+  },
+  "dstore": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      }
+    ],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "dstore",
+        "opcode": "57"
+      }
+    ]
+  },
+  "dstore_": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "dstore_0",
+        "opcode": "71"
+      },
+      {
+        "name": "dstore_1",
+        "opcode": "72"
+      },
+      {
+        "name": "dstore_2",
+        "opcode": "73"
+      },
+      {
+        "name": "dstore_3",
+        "opcode": "74"
+      }
+    ]
+  },
+  "dsub": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "dsub",
+        "opcode": "103"
+      }
+    ]
+  },
+  "dup": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "value",
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "dup",
+        "opcode": "89"
+      }
+    ]
+  },
+  "dup_x1": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value2",
+      "value1"
+    ],
+    "pushed": [
+      "value1",
+      "value2",
+      "value1"
+    ],
+    "forms": [
+      {
+        "name": "dup_x1",
+        "opcode": "90"
+      }
+    ]
+  },
+  "dup_x2": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "dup_x2",
+        "opcode": "91"
+      }
+    ]
+  },
+  "dup2": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "dup2",
+        "opcode": "92"
+      }
+    ]
+  },
+  "dup2_x1": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "dup2_x1",
+        "opcode": "93"
+      }
+    ]
+  },
+  "dup2_x2": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "dup2_x2",
+        "opcode": "94"
+      }
+    ]
+  },
+  "f2d": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "f2d",
+        "opcode": "141"
+      }
+    ]
+  },
+  "f2i": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "f2i",
+        "opcode": "139"
+      }
+    ]
+  },
+  "f2l": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "f2l",
+        "opcode": "140"
+      }
+    ]
+  },
+  "fadd": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "fadd",
+        "opcode": "98"
+      }
+    ]
+  },
+  "faload": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index"
+    ],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "faload",
+        "opcode": "48"
+      }
+    ]
+  },
+  "fastore": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index",
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "fastore",
+        "opcode": "81"
+      }
+    ]
+  },
+  "fcmp": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "fcmpg",
+        "opcode": "150"
+      },
+      {
+        "name": "fcmpl",
+        "opcode": "149"
+      }
+    ]
+  },
+  "fconst_": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [
+      "f"
+    ],
+    "forms": [
+      {
+        "name": "fconst_0",
+        "opcode": "11"
+      },
+      {
+        "name": "fconst_1",
+        "opcode": "12"
+      },
+      {
+        "name": "fconst_2",
+        "opcode": "13"
+      }
+    ]
+  },
+  "fdiv": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "fdiv",
+        "opcode": "110"
+      }
+    ]
+  },
+  "fload": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "fload",
+        "opcode": "23"
+      }
+    ]
+  },
+  "fload_": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "fload_0",
+        "opcode": "34"
+      },
+      {
+        "name": "fload_1",
+        "opcode": "35"
+      },
+      {
+        "name": "fload_2",
+        "opcode": "36"
+      },
+      {
+        "name": "fload_3",
+        "opcode": "37"
+      }
+    ]
+  },
+  "fmul": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "fmul",
+        "opcode": "106"
+      }
+    ]
+  },
+  "fneg": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "fneg",
+        "opcode": "118"
+      }
+    ]
+  },
+  "frem": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "frem",
+        "opcode": "114"
+      }
+    ]
+  },
+  "freturn": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "freturn",
+        "opcode": "174"
+      }
+    ]
+  },
+  "fstore": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      }
+    ],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "fstore",
+        "opcode": "56"
+      }
+    ]
+  },
+  "fstore_": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "fstore_0",
+        "opcode": "67"
+      },
+      {
+        "name": "fstore_1",
+        "opcode": "68"
+      },
+      {
+        "name": "fstore_2",
+        "opcode": "69"
+      },
+      {
+        "name": "fstore_3",
+        "opcode": "70"
+      }
+    ]
+  },
+  "fsub": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "fsub",
+        "opcode": "102"
+      }
+    ]
+  },
+  "getfield": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": [
+      "objectref"
+    ],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "getfield",
+        "opcode": "180"
+      }
+    ]
+  },
+  "getstatic": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "getstatic",
+        "opcode": "178"
+      }
+    ]
+  },
+  "goto": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "branchbyte",
+        "width": 2,
+        "type": "offset"
+      }
+    ],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "goto",
+        "opcode": "167"
+      }
+    ]
+  },
+  "goto_w": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "branchbyte",
+        "width": 4,
+        "type": "offset"
+      }
+    ],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "goto_w",
+        "opcode": "200"
+      }
+    ]
+  },
+  "i2b": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "i2b",
+        "opcode": "145"
+      }
+    ]
+  },
+  "i2c": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "i2c",
+        "opcode": "146"
+      }
+    ]
+  },
+  "i2d": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "i2d",
+        "opcode": "135"
+      }
+    ]
+  },
+  "i2f": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "i2f",
+        "opcode": "134"
+      }
+    ]
+  },
+  "i2l": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "i2l",
+        "opcode": "133"
+      }
+    ]
+  },
+  "i2s": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "i2s",
+        "opcode": "147"
+      }
+    ]
+  },
+  "iadd": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "iadd",
+        "opcode": "96"
+      }
+    ]
+  },
+  "iaload": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index"
+    ],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "iaload",
+        "opcode": "46"
+      }
+    ]
+  },
+  "iand": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "iand",
+        "opcode": "126"
+      }
+    ]
+  },
+  "iastore": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index",
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "iastore",
+        "opcode": "79"
+      }
+    ]
+  },
+  "iconst_": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [
+      "i"
+    ],
+    "forms": [
+      {
+        "name": "iconst_m1",
+        "opcode": "2"
+      },
+      {
+        "name": "iconst_0",
+        "opcode": "3"
+      },
+      {
+        "name": "iconst_1",
+        "opcode": "4"
+      },
+      {
+        "name": "iconst_2",
+        "opcode": "5"
+      },
+      {
+        "name": "iconst_3",
+        "opcode": "6"
+      },
+      {
+        "name": "iconst_4",
+        "opcode": "7"
+      },
+      {
+        "name": "iconst_5",
+        "opcode": "8"
+      }
+    ]
+  },
+  "idiv": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "idiv",
+        "opcode": "108"
+      }
+    ]
+  },
+  "if_acmp": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "branchbyte",
+        "width": 2,
+        "type": "offset"
+      }
+    ],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "if_acmpeq",
+        "opcode": "165"
+      },
+      {
+        "name": "if_acmpne",
+        "opcode": "166"
+      }
+    ]
+  },
+  "if_icmp": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "branchbyte",
+        "width": 2,
+        "type": "offset"
+      }
+    ],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "if_icmpeq",
+        "opcode": "159"
+      },
+      {
+        "name": "if_icmpne",
+        "opcode": "160"
+      },
+      {
+        "name": "if_icmplt",
+        "opcode": "161"
+      },
+      {
+        "name": "if_icmpge",
+        "opcode": "162"
+      },
+      {
+        "name": "if_icmpgt",
+        "opcode": "163"
+      },
+      {
+        "name": "if_icmple",
+        "opcode": "164"
+      }
+    ]
+  },
+  "if": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "branchbyte",
+        "width": 2,
+        "type": "offset"
+      }
+    ],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "ifeq",
+        "opcode": "153"
+      },
+      {
+        "name": "ifne",
+        "opcode": "154"
+      },
+      {
+        "name": "iflt",
+        "opcode": "155"
+      },
+      {
+        "name": "ifge",
+        "opcode": "156"
+      },
+      {
+        "name": "ifgt",
+        "opcode": "157"
+      },
+      {
+        "name": "ifle",
+        "opcode": "158"
+      }
+    ]
+  },
+  "ifnonnull": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "branchbyte",
+        "width": 2,
+        "type": "offset"
+      }
+    ],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "ifnonnull",
+        "opcode": "199"
+      }
+    ]
+  },
+  "ifnull": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "branchbyte",
+        "width": 2,
+        "type": "offset"
+      }
+    ],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "ifnull",
+        "opcode": "198"
+      }
+    ]
+  },
+  "iinc": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      },
+      {
+        "name": "const",
+        "width": 1,
+        "type": "byte",
+        "wwidth": 2
+      }
+    ],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "iinc",
+        "opcode": "132"
+      }
+    ]
+  },
+  "iload": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "iload",
+        "opcode": "21"
+      }
+    ]
+  },
+  "iload_": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "iload_0",
+        "opcode": "26"
+      },
+      {
+        "name": "iload_1",
+        "opcode": "27"
+      },
+      {
+        "name": "iload_2",
+        "opcode": "28"
+      },
+      {
+        "name": "iload_3",
+        "opcode": "29"
+      }
+    ]
+  },
+  "imul": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "imul",
+        "opcode": "104"
+      }
+    ]
+  },
+  "ineg": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "ineg",
+        "opcode": "116"
+      }
+    ]
+  },
+  "instanceof": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": [
+      "objectref"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "instanceof",
+        "opcode": "193"
+      }
+    ]
+  },
+  "invokedynamic": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      },
+      {
+        "name": "",
+        "width": 1,
+        "type": "lit0"
+      },
+      {
+        "name": "",
+        "width": 1,
+        "type": "lit0"
+      }
+    ],
+    "popped": "dynamic",
+    "pushed": [],
+    "forms": [
+      {
+        "name": "invokedynamic",
+        "opcode": "186"
+      }
+    ]
+  },
+  "invokeinterface": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      },
+      {
+        "name": "count",
+        "width": 1,
+        "type": "arg_count"
+      },
+      {
+        "name": "",
+        "width": 1,
+        "type": "lit0"
+      }
+    ],
+    "popped": "dynamic",
+    "pushed": [],
+    "forms": [
+      {
+        "name": "invokeinterface",
+        "opcode": "185"
+      }
+    ]
+  },
+  "invokespecial": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": "dynamic",
+    "pushed": [],
+    "forms": [
+      {
+        "name": "invokespecial",
+        "opcode": "183"
+      }
+    ]
+  },
+  "invokestatic": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": "dynamic",
+    "pushed": [],
+    "forms": [
+      {
+        "name": "invokestatic",
+        "opcode": "184"
+      }
+    ]
+  },
+  "invokevirtual": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": "dynamic",
+    "pushed": [],
+    "forms": [
+      {
+        "name": "invokevirtual",
+        "opcode": "182"
+      }
+    ]
+  },
+  "ior": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "ior",
+        "opcode": "128"
+      }
+    ]
+  },
+  "irem": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "irem",
+        "opcode": "112"
+      }
+    ]
+  },
+  "ireturn": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "ireturn",
+        "opcode": "172"
+      }
+    ]
+  },
+  "ishl": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "ishl",
+        "opcode": "120"
+      }
+    ]
+  },
+  "ishr": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "ishr",
+        "opcode": "122"
+      }
+    ]
+  },
+  "istore": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      }
+    ],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "istore",
+        "opcode": "54"
+      }
+    ]
+  },
+  "istore_": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "istore_0",
+        "opcode": "59"
+      },
+      {
+        "name": "istore_1",
+        "opcode": "60"
+      },
+      {
+        "name": "istore_2",
+        "opcode": "61"
+      },
+      {
+        "name": "istore_3",
+        "opcode": "62"
+      }
+    ]
+  },
+  "isub": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "isub",
+        "opcode": "100"
+      }
+    ]
+  },
+  "iushr": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "iushr",
+        "opcode": "124"
+      }
+    ]
+  },
+  "ixor": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "ixor",
+        "opcode": "130"
+      }
+    ]
+  },
+  "jsr": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "branchbyte",
+        "width": 2,
+        "type": "offset"
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "address"
+    ],
+    "forms": [
+      {
+        "name": "jsr",
+        "opcode": "168"
+      }
+    ]
+  },
+  "jsr_w": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "branchbyte",
+        "width": 4,
+        "type": "offset"
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "address"
+    ],
+    "forms": [
+      {
+        "name": "jsr_w",
+        "opcode": "201"
+      }
+    ]
+  },
+  "l2d": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "l2d",
+        "opcode": "138"
+      }
+    ]
+  },
+  "l2f": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "l2f",
+        "opcode": "137"
+      }
+    ]
+  },
+  "l2i": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "l2i",
+        "opcode": "136"
+      }
+    ]
+  },
+  "ladd": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "ladd",
+        "opcode": "97"
+      }
+    ]
+  },
+  "laload": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index"
+    ],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "laload",
+        "opcode": "47"
+      }
+    ]
+  },
+  "land": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "land",
+        "opcode": "127"
+      }
+    ]
+  },
+  "lastore": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index",
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "lastore",
+        "opcode": "80"
+      }
+    ]
+  },
+  "lcmp": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "lcmp",
+        "opcode": "148"
+      }
+    ]
+  },
+  "lconst_": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [
+      "l"
+    ],
+    "forms": [
+      {
+        "name": "lconst_0",
+        "opcode": "9"
+      },
+      {
+        "name": "lconst_1",
+        "opcode": "10"
+      }
+    ]
+  },
+  "ldc": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "constref"
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "ldc",
+        "opcode": "18"
+      }
+    ]
+  },
+  "ldc_w": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "ldc_w",
+        "opcode": "19"
+      }
+    ]
+  },
+  "ldc2_w": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "ldc2_w",
+        "opcode": "20"
+      }
+    ]
+  },
+  "ldiv": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "ldiv",
+        "opcode": "109"
+      }
+    ]
+  },
+  "lload": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "lload",
+        "opcode": "22"
+      }
+    ]
+  },
+  "lload_": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "lload_0",
+        "opcode": "30"
+      },
+      {
+        "name": "lload_1",
+        "opcode": "31"
+      },
+      {
+        "name": "lload_2",
+        "opcode": "32"
+      },
+      {
+        "name": "lload_3",
+        "opcode": "33"
+      }
+    ]
+  },
+  "lmul": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "lmul",
+        "opcode": "105"
+      }
+    ]
+  },
+  "lneg": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "lneg",
+        "opcode": "117"
+      }
+    ]
+  },
+  "lookupswitch": {
+    "manual": true
+  },
+  "lor": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "lor",
+        "opcode": "129"
+      }
+    ]
+  },
+  "lrem": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "lrem",
+        "opcode": "113"
+      }
+    ]
+  },
+  "lreturn": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "lreturn",
+        "opcode": "173"
+      }
+    ]
+  },
+  "lshl": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "lshl",
+        "opcode": "121"
+      }
+    ]
+  },
+  "lshr": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "lshr",
+        "opcode": "123"
+      }
+    ]
+  },
+  "lstore": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      }
+    ],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "lstore",
+        "opcode": "55"
+      }
+    ]
+  },
+  "lstore_": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "lstore_0",
+        "opcode": "63"
+      },
+      {
+        "name": "lstore_1",
+        "opcode": "64"
+      },
+      {
+        "name": "lstore_2",
+        "opcode": "65"
+      },
+      {
+        "name": "lstore_3",
+        "opcode": "66"
+      }
+    ]
+  },
+  "lsub": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "lsub",
+        "opcode": "101"
+      }
+    ]
+  },
+  "lushr": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "lushr",
+        "opcode": "125"
+      }
+    ]
+  },
+  "lxor": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value1",
+      "value2"
+    ],
+    "pushed": [
+      "result"
+    ],
+    "forms": [
+      {
+        "name": "lxor",
+        "opcode": "131"
+      }
+    ]
+  },
+  "monitorenter": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "objectref"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "monitorenter",
+        "opcode": "194"
+      }
+    ]
+  },
+  "monitorexit": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "objectref"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "monitorexit",
+        "opcode": "195"
+      }
+    ]
+  },
+  "multianewarray": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      },
+      {
+        "name": "dimensions",
+        "width": 1,
+        "type": "uint8"
+      }
+    ],
+    "popped": [
+      "count1",
+      "count2"
+    ],
+    "pushed": [
+      "arrayref"
+    ],
+    "forms": [
+      {
+        "name": "multianewarray",
+        "opcode": "197"
+      }
+    ]
+  },
+  "new": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "objectref"
+    ],
+    "forms": [
+      {
+        "name": "new",
+        "opcode": "187"
+      }
+    ]
+  },
+  "newarray": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "atype",
+        "width": 1,
+        "type": "atype"
+      }
+    ],
+    "popped": [
+      "count"
+    ],
+    "pushed": [
+      "arrayref"
+    ],
+    "forms": [
+      {
+        "name": "newarray",
+        "opcode": "188"
+      }
+    ]
+  },
+  "nop": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "nop",
+        "opcode": "0"
+      }
+    ]
+  },
+  "pop": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "pop",
+        "opcode": "87"
+      }
+    ]
+  },
+  "pop2": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "pop2",
+        "opcode": "88"
+      }
+    ]
+  },
+  "putfield": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": [
+      "objectref",
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "putfield",
+        "opcode": "181"
+      }
+    ]
+  },
+  "putstatic": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "indexbyte",
+        "width": 2,
+        "type": "constref"
+      }
+    ],
+    "popped": [
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "putstatic",
+        "opcode": "179"
+      }
+    ]
+  },
+  "ret": {
+    "wideable": true,
+    "args": [
+      {
+        "name": "index",
+        "width": 1,
+        "type": "varref",
+        "wwidth": 2
+      }
+    ],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "ret",
+        "opcode": "169"
+      }
+    ]
+  },
+  "return": {
+    "wideable": false,
+    "args": [],
+    "popped": [],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "return",
+        "opcode": "177"
+      }
+    ]
+  },
+  "saload": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index"
+    ],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "saload",
+        "opcode": "53"
+      }
+    ]
+  },
+  "sastore": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "arrayref",
+      "index",
+      "value"
+    ],
+    "pushed": [],
+    "forms": [
+      {
+        "name": "sastore",
+        "opcode": "86"
+      }
+    ]
+  },
+  "sipush": {
+    "wideable": false,
+    "args": [
+      {
+        "name": "byte",
+        "width": 2,
+        "type": "short"
+      }
+    ],
+    "popped": [],
+    "pushed": [
+      "value"
+    ],
+    "forms": [
+      {
+        "name": "sipush",
+        "opcode": "17"
+      }
+    ]
+  },
+  "swap": {
+    "wideable": false,
+    "args": [],
+    "popped": [
+      "value2",
+      "value1"
+    ],
+    "pushed": [
+      "value1",
+      "value2"
+    ],
+    "forms": [
+      {
+        "name": "swap",
+        "opcode": "95"
+      }
+    ]
+  },
+  "tableswitch": {
+    "manual": true
+  },
+  "wide": {
+    "manual": true
+  }
+}
