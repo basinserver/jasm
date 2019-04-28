@@ -1,5 +1,6 @@
 package com.protryon.jasm;
 
+import com.protryon.jasm.instruction.Instruction;
 import com.protryon.jasm.stage1.Stage1Class;
 
 import java.util.ArrayList;
@@ -73,7 +74,10 @@ public final class Klass {
             if (method.isStatic) {
                 sb.append("static ");
             }
-            sb.append(method.descriptor.niceString(method.name)).append(";\n\n");
+            sb.append(method.descriptor.niceString(method.name)).append("{\n");
+            for (Instruction instruction : method.code) {
+                sb.append("  ").append(instruction.toString()).append("\n");
+            }
         }
         return sb.toString();
     }

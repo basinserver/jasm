@@ -96,9 +96,8 @@ Object.keys(spec).forEach(name => {
            }
         })
         for (let form of ins.forms) {
-            form.name = upperFirst(form.name);
-            opcodeTable[parseInt(form.opcode)] = form.name;
-            classes[form.name] = `
+            opcodeTable[parseInt(form.opcode)] = upperFirst(form.name);
+            classes[upperFirst(form.name)] = `
 package com.protryon.jasm.instruction.instructions;
 
 import com.protryon.jasm.instruction.Instruction;
@@ -115,7 +114,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.util.ArrayList;
 
-public class ${form.name} extends Instruction {
+public class ${upperFirst(form.name)} extends Instruction {
 
     ${ins.args.map(arg => {
         let jtype = typeMap[arg.type];
@@ -199,7 +198,12 @@ ${name in customPops ? `return ${customPops[name]};` :
 
     @Override
     public String toString() {
-        return null;
+        StringBuilder builder = new StringBuilder(this.name());
+        ${ins.args.map(arg => {
+            if (arg.type === 'lit0') return '';
+            return `builder.append(" ").append(this.${arg.name});`;
+        }).join('\n')}
+        return builder.toString();
     }
 
     @Override
