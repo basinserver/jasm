@@ -9,6 +9,7 @@ import java.util.LinkedList;
 
 public class Method {
 
+    public final Klass parent;
     public String name;
     public MethodDescriptor descriptor;
     public boolean isPublic = false;
@@ -52,7 +53,8 @@ public class Method {
         return label;
     }
 
-    public Method(String name, MethodDescriptor descriptor) {
+    public Method(Klass parent, String name, MethodDescriptor descriptor) {
+        this.parent = parent;
         this.name = name;
         this.descriptor = descriptor;
     }

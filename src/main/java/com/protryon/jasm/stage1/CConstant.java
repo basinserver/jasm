@@ -84,7 +84,7 @@ public abstract class CConstant<T> {
                 return method;
             }
         }
-        Method method = new Method(name, descriptor);
+        Method method = new Method(klass, name, descriptor);
         method.isDummy = true;
         klass.methods.add(method);
         return method;
@@ -107,7 +107,7 @@ public abstract class CConstant<T> {
                 return field;
             }
         }
-        field = new Field(type, name);
+        field = new Field(klass, type, name);
         field.isDummy = true;
         klass.fields.put(name, field);
         return field;

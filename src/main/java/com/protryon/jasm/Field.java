@@ -2,6 +2,7 @@ package com.protryon.jasm;
 
 public class Field {
 
+    public final Klass parent;
     public JType type;
     public String name;
     public boolean isPublic = false;
@@ -18,7 +19,8 @@ public class Field {
     // set for created methods in things like stdlib or unincluded libs
     public boolean isDummy = false;
 
-    public Field(JType type, String name) {
+    public Field(Klass parent, JType type, String name) {
+        this.parent = parent;
         this.type = type;
         this.name = name;
     }

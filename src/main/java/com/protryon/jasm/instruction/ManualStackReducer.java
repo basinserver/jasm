@@ -22,6 +22,8 @@ abstract class ManualStackReducer<T> {
 
     public abstract Maybe<T> reduceInvokespecial(Invokespecial instruction, T objectref, List<T> arguments);
 
+    public abstract T reduceMultianewarray(Multianewarray instruction, List<T> count);
+
     public abstract void reduceLookupswitch(Lookupswitch instruction, T index);
 
     public abstract void reduceTableswitch(Tableswitch instruction, T index);
@@ -31,5 +33,4 @@ abstract class ManualStackReducer<T> {
     public abstract void reduceExitTry(ExitTry instruction);
 
     public abstract void reduceLabel(Label instruction);
-
 }

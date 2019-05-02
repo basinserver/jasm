@@ -260,6 +260,8 @@ const tupleApplications = {
     3: x => `stack.push(${x}.a); stack.push(${x}.b); stack.push(${x}.c);`,
 };
 
+const alwaysManual = ['Multianewarray'];
+
 const reducer = `
 package com.protryon.jasm.instruction;
 
@@ -272,7 +274,7 @@ public abstract class StackReducer<T> extends ManualStackReducer<T> {
 ${Object.keys(formList).map(name => {
     let form = formList[name];
     let ins = form.instruction;
-    if (typeof ins.popped == 'string') {
+    if (typeof ins.popped == 'string' || alwaysManual.includes(name)) {
         return '';
     }
     return `    public abstract ${tupleTs[ins.pushed.length]} reduce${name}(${name} instruction${ins.popped.map(arg => ', T ' + arg).filter(a => a.length > 0).join('')});\n`;
@@ -302,11 +304,11 @@ public final class StackDirector {
 ${Object.keys(formList).sort((form1, form2) => formList[form1].opcode - formList[form2].opcode).map(name => {
     let form = formList[name];
     let ins = form.instruction;
-    if (typeof ins.popped == 'string') {
+    if (typeof ins.popped == 'string' || alwaysManual.includes(name)) {
         return '';
     }
 return `            case ${form.opcode}: {
-${ins.popped.map(x => `                T ${x} = stack.pop();`).join('\n')}
+${ins.popped.slice(0).reverse().map(x => `                T ${x} = stack.pop();`).join('\n')}
                 ${ins.pushed.length === 0 ? '' : tupleTs[ins.pushed.length] + ' pushed = '}reducer.reduce${name}((${name}) i${ins.popped.map(arg => ', ' + arg).join('')});
                 ${tupleApplications[ins.pushed.length]('pushed')}
                 break;

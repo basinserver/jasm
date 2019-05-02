@@ -36,7 +36,9 @@
     "wideable": false,
     "args": [],
     "popped": [],
-    "pushed": [],
+    "pushed": [
+      "null"
+    ],
     "forms": [
       {
         "name": "aconst_null",

@@ -258,7 +258,7 @@ public class Stage1Class {
             klass.interfaces.add(resolveKlass(classpath, interfaceRef));
         }
         for (AttributeHolder attributeHolder : this.fields) {
-            Field field = new Field(JType.fromDescriptor(classpath, CUTF8.assertCUTF8(this.constants.get(attributeHolder.descriptor)).value), CUTF8.assertCUTF8(this.constants.get(attributeHolder.name)).value);
+            Field field = new Field(klass, JType.fromDescriptor(classpath, CUTF8.assertCUTF8(this.constants.get(attributeHolder.descriptor)).value), CUTF8.assertCUTF8(this.constants.get(attributeHolder.name)).value);
             if ((attributeHolder.accessFlags & 0x0001) != 0) {
                 field.isPublic = true;
             }
@@ -289,7 +289,7 @@ public class Stage1Class {
             klass.fields.put(field.name, field);
         }
         for (AttributeHolder attributeHolder : this.methods) {
-            Method method = new Method(CUTF8.assertCUTF8(this.constants.get(attributeHolder.name)).value, MethodDescriptor.fromString(classpath, CUTF8.assertCUTF8(this.constants.get(attributeHolder.descriptor)).value));
+            Method method = new Method(klass, CUTF8.assertCUTF8(this.constants.get(attributeHolder.name)).value, MethodDescriptor.fromString(classpath, CUTF8.assertCUTF8(this.constants.get(attributeHolder.descriptor)).value));
             if ((attributeHolder.accessFlags & 0x0001) != 0) {
                 method.isPublic = true;
             }
