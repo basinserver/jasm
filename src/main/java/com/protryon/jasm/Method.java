@@ -57,4 +57,38 @@ public class Method {
         this.descriptor = descriptor;
     }
 
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if (this.isPublic) {
+            sb.append("public ");
+        }
+        if (this.isPrivate) {
+            sb.append("private ");
+        }
+        if (this.isProtected) {
+            sb.append("protected ");
+        }
+        if (this.isStatic) {
+            sb.append("static ");
+        }
+        if (this.isFinal) {
+            sb.append("final ");
+        }
+        if (this.isSynchronized) {
+            sb.append("synchronized ");
+        }
+        if (this.isNative) {
+            sb.append("native ");
+        }
+        if (this.isAbstract) {
+            sb.append("abstract ");
+        }
+        sb.append(this.descriptor.niceString(this.name)).append(" {\n");
+        for (Instruction instruction : this.code) {
+            sb.append("  ").append(instruction.toString()).append("\n");
+        }
+        sb.append("}\n");
+        return sb.toString();
+    }
+
 }

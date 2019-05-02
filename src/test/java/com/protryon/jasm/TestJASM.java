@@ -21,9 +21,11 @@ public class TestJASM {
 
         Klass bmm = classpath.lookupKlass("bmm");
 
+        System.out.println(bmm.methods.get(1).toString());
+
         assertNotNull(bmm);
 
-        System.out.println(bmm);
+        //System.out.println(bmm);
 
     }
 }

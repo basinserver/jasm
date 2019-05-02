@@ -71,13 +71,7 @@ public final class Klass {
         });
         sb.append("\n\n\n");
         for (Method method : methods) {
-            if (method.isStatic) {
-                sb.append("static ");
-            }
-            sb.append(method.descriptor.niceString(method.name)).append("{\n");
-            for (Instruction instruction : method.code) {
-                sb.append("  ").append(instruction.toString()).append("\n");
-            }
+            sb.append(method.toString());
         }
         return sb.toString();
     }
