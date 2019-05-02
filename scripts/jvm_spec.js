@@ -83,6 +83,8 @@ opcodeTable[171] = 'Lookupswitch';
 opcodeTable[170] = 'Tableswitch';
 opcodeTable[196] = 'Wide';
 
+let formList = {};
+
 Object.keys(spec).forEach(name => {
         let ins = spec[name];
         if (ins.manual) {
@@ -97,6 +99,8 @@ Object.keys(spec).forEach(name => {
         })
         for (let form of ins.forms) {
             opcodeTable[parseInt(form.opcode)] = upperFirst(form.name);
+            form.instruction = ins;
+            formList[upperFirst(form.name)] = form;
             classes[upperFirst(form.name)] = `
 package com.protryon.jasm.instruction.instructions;
 
@@ -240,3 +244,81 @@ ${opcodeTable.map(x => "        " + x + "::new,").join('\n')}
 }
 `
 fs.writeFileSync(process.argv[3] + '/OpcodeTable.java', table);
+
+
+const tupleTs = {
+    0: 'void',
+    1: 'T',
+    2: 'Pair<T, T>',
+    3: 'Tuple3<T, T, T>',
+};
+
+const tupleApplications = {
+    0: x => '',
+    1: x => `stack.push(${x});`,
+    2: x => `stack.push(${x}.left); stack.push(${x}.right);`,
+    3: x => `stack.push(${x}.a); stack.push(${x}.b); stack.push(${x}.c);`,
+};
+
+const reducer = `
+package com.protryon.jasm.instruction;
+
+import com.protryon.jasm.instruction.instructions.*;
+import com.protryon.jasm.*;
+import com.shapesecurity.functional.*;
+
+public abstract class StackReducer<T> extends ManualStackReducer<T> {
+
+${Object.keys(formList).map(name => {
+    let form = formList[name];
+    let ins = form.instruction;
+    if (typeof ins.popped == 'string') {
+        return '';
+    }
+    return `    public abstract ${tupleTs[ins.pushed.length]} reduce${name}(${name} instruction${ins.popped.map(arg => ', T ' + arg).filter(a => a.length > 0).join('')});\n`;
+}).filter(x => x.length > 0).join('\n')}
+
+}
+`
+fs.writeFileSync(process.argv[3] + '/StackReducer.java', reducer);
+
+const director = `
+package com.protryon.jasm.instruction;
+
+import java.util.LinkedList;
+import com.protryon.jasm.instruction.instructions.*;
+import com.shapesecurity.functional.*;
+
+public final class StackDirector {
+
+    private StackDirector() {
+
+    }
+
+    public static <T> LinkedList<T> reduceInstructions(StackReducer<T> reducer, Iterable<Instruction> code, LinkedList<T> stackPrefix) {
+        LinkedList<T> stack = stackPrefix;
+        for (Instruction i : code) {
+            switch (i.opcode()) {
+${Object.keys(formList).sort((form1, form2) => formList[form1].opcode - formList[form2].opcode).map(name => {
+    let form = formList[name];
+    let ins = form.instruction;
+    if (typeof ins.popped == 'string') {
+        return '';
+    }
+return `            case ${form.opcode}: {
+${ins.popped.map(x => `                T ${x} = stack.pop();`).join('\n')}
+                ${ins.pushed.length === 0 ? '' : tupleTs[ins.pushed.length] + ' pushed = '}reducer.reduce${name}((${name}) i${ins.popped.map(arg => ', ' + arg).join('')});
+                ${tupleApplications[ins.pushed.length]('pushed')}
+                break;
+            }`;
+}).filter(x => x.length > 0).join('\n')}
+            default:
+                ManualStackDirector.reduceInstruction(reducer, i, stack);
+            }
+        }
+        return stack;
+    }
+}
+`
+
+fs.writeFileSync(process.argv[3] + '/StackDirector.java', director);

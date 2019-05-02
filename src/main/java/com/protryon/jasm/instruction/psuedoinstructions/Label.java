@@ -26,7 +26,7 @@ public class Label extends Instruction {
 
     @Override
     public int opcode() {
-        return -1;
+        return -3;
     }
 
     @Override

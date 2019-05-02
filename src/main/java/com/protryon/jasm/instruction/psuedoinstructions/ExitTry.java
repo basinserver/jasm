@@ -19,7 +19,7 @@ public class ExitTry extends Instruction {
 
     @Override
     public int opcode() {
-        return -1;
+        return -2;
     }
 
     @Override
