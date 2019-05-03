@@ -260,7 +260,7 @@ const tupleApplications = {
     3: x => `stack.push(${x}.a); stack.push(${x}.b); stack.push(${x}.c);`,
 };
 
-const alwaysManual = ['Multianewarray'];
+const alwaysManual = ['Multianewarray', 'Athrow', 'Dup_x2', 'Dup2', 'Dup2_x1', 'Dup2_x2', 'Pop2'];
 
 const reducer = `
 package com.protryon.jasm.instruction;

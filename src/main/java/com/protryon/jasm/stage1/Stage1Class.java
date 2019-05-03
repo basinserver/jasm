@@ -224,7 +224,7 @@ public class Stage1Class {
                         } else {
                             jtype = JType.instance((Klass) constants.get(type).value);
                         }
-                        Label label = newMethod.getOrMakeLabel("_catch_" + startIndex + "_" + endIndex + "_" + jtype.javaName);
+                        Label label = newMethod.makeCatch("_catch_" + startIndex + "_" + endIndex + "_" + jtype.javaName);
                         EnterTry enter = new EnterTry(label, jtype);
                         ExitTry exit = new ExitTry();
                         instructionsToAdd.put(startIndex, enter);

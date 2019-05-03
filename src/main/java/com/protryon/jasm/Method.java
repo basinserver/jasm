@@ -1,6 +1,7 @@
 package com.protryon.jasm;
 
 import com.protryon.jasm.instruction.Instruction;
+import com.protryon.jasm.instruction.psuedoinstructions.CatchLabel;
 import com.protryon.jasm.instruction.psuedoinstructions.Label;
 
 import java.util.ArrayList;
@@ -52,6 +53,16 @@ public class Method {
         labels.put(name, label);
         return label;
     }
+
+    public CatchLabel makeCatch(String name) {
+        if (labels.containsKey(name)) {
+            return (CatchLabel) labels.get(name);
+        }
+        CatchLabel label = new CatchLabel(name);
+        labels.put(name, label);
+        return label;
+    }
+
 
     public Method(Klass parent, String name, MethodDescriptor descriptor) {
         this.parent = parent;

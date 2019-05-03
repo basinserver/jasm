@@ -20,6 +20,36 @@ public final class ManualStackDirector {
 
     protected static <T> void reduceInstruction(StackReducer<T> reducer, Instruction instruction, LinkedList<T> stack) {
         switch (instruction.opcode()) {
+            case 88: {
+                throw new UnsupportedOperationException("pop2");
+                // reducer.reducePop2((Pop2) i);
+
+                // break;
+            }
+            case 91: {
+                throw new UnsupportedOperationException("dup_x2");
+                // reducer.reduceDup_x2((Dup_x2) i);
+
+                // break;
+            }
+            case 92: {
+                throw new UnsupportedOperationException("dup2");
+                // reducer.reduceDup2((Dup2) i);
+
+                // break;
+            }
+            case 93: {
+                throw new UnsupportedOperationException("dup2_x1");
+                // reducer.reduceDup2_x1((Dup2_x1) i);
+
+                // break;
+            }
+            case 94: {
+                throw new UnsupportedOperationException("dup2_x2");
+                // reducer.reduceDup2_x2((Dup2_x2) i);
+
+                // break;
+            }
             case 185: { // invokeinterface
                 Method method = ((Constant<Method>) ((Invokeinterface) instruction).indexbyte).value;
                 List<T> arguments = new ArrayList<>();
@@ -76,6 +106,12 @@ public final class ManualStackDirector {
                 reducer.reduceTableswitch((Tableswitch) instruction, key);
                 break;
             }
+            case 191: { // athrow
+                T objectref = stack.pop();
+                T pushed = reducer.reduceAthrow((Athrow) instruction, objectref);
+                throw new UnsupportedOperationException("TODO: find catch block for exception type then modify stack at that point");
+                // break;
+            }
             case 197: { // multianewarray
                 Multianewarray multianewarray = (Multianewarray) instruction;
                 List<T> dimensions = new ArrayList<>(multianewarray.dimensions);
@@ -87,16 +123,17 @@ public final class ManualStackDirector {
                 stack.push(pushed);
                 break;
             }
+
             // wide cannot occur in instructions (eaten during decoding)
             case -1: { // EnterTry psuedo instruction
                 reducer.reduceEnterTry((EnterTry) instruction);
                 break;
             }
-            case -2: { // EnterTry psuedo instruction
+            case -2: { // ExitTry psuedo instruction
                 reducer.reduceExitTry((ExitTry) instruction);
                 break;
             }
-            case -3: { // EnterTry psuedo instruction
+            case -3: { // Label psuedo instruction
                 reducer.reduceLabel((Label) instruction);
                 break;
             }

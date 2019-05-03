@@ -6,27 +6,30 @@ public class JType {
 
     public final String niceName;
     public final String javaName;
+    public final int computationType;
 
-    private JType(String niceName, String javaName) {
+    private JType(String niceName, String javaName, int computationType) {
         this.niceName = niceName;
         this.javaName = javaName;
+        this.computationType = computationType;
     }
 
-    public static final JType voidT = new JType("void", "V");
-    public static final JType byteT = new JType("int", "B");
-    public static final JType charT = new JType("char", "C");
-    public static final JType shortT = new JType("short", "S");
-    public static final JType intT = new JType("int", "I");
-    public static final JType longT = new JType("long", "J");
-    public static final JType floatT = new JType("float", "F");
-    public static final JType doubleT = new JType("double", "D");
-    public static final JType booleanT = new JType("boolean", "Z");
+    public static final JType voidT = new JType("void", "V", -1);
+    public static final JType byteT = new JType("int", "B", 1);
+    public static final JType charT = new JType("char", "C", 1);
+    public static final JType shortT = new JType("short", "S", 1);
+    public static final JType intT = new JType("int", "I", 1);
+    public static final JType longT = new JType("long", "J", 2);
+    public static final JType floatT = new JType("float", "F", 1);
+    public static final JType doubleT = new JType("double", "D", 2);
+    public static final JType booleanT = new JType("boolean", "Z", 1);
+    public static final JType nullT = new JType("null", "N", -1); // internal, special case for general, untyped null
 
     public static final class JTypeInstance extends JType {
         public final Klass klass;
 
         private JTypeInstance(Klass klass) {
-            super(klass.name, "L" + klass.name + ";");
+            super(klass.name, "L" + klass.name + ";", 1);
             this.klass = klass;
         }
     }
@@ -35,9 +38,10 @@ public class JType {
         public final JType elementType;
 
         private JTypeArray(JType elementType) {
-            super(elementType.niceName + "[]", "[" + elementType.javaName);
+            super(elementType.niceName + "[]", "[" + elementType.javaName, 1);
             this.elementType = elementType;
         }
+
     }
 
     public static JType instance(Klass klass) {
@@ -100,4 +104,32 @@ public class JType {
         return this.javaName.hashCode() + 1;
     }
 
+    public JType elementType() {
+        if (!(this instanceof JTypeArray)) {
+            throw new RuntimeException("Illegal non-array when expecting array type");
+        }
+        return ((JTypeArray) this).elementType;
+    }
+
+    public Klass referenceOf() {
+        if (this == nullT) {
+            return null;
+        }
+        if (!(this instanceof JTypeInstance)) {
+            throw new RuntimeException("Illegal non-array when expecting array type");
+        }
+        return ((JTypeInstance) this).klass;
+    }
+
+    public void assertType(JType other) {
+        if (!this.equals(other)) {
+            throw new RuntimeException("Got type \"" + this.niceName + "\" when expecting type \"" + other.niceName + "\"");
+        }
+    }
+
+    public void assertComputationType(int type) {
+        if (this.computationType != type) {
+            throw new RuntimeException("Got type \"" + this.niceName + "\" when expecting computation type \"" + type+ "\"");
+        }
+    }
 }

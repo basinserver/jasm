@@ -1,5 +1,6 @@
 package com.protryon.jasm;
 
+import com.github.javaparser.utils.CodeGenerationUtils;
 import com.protryon.jasm.decompiler.DecompilerReducer;
 import com.protryon.jasm.instruction.StackDirector;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestJASM {
+
+    private int tempCounter = 0;
 
     @Test
     public void testJASM() throws IOException {
@@ -29,7 +32,11 @@ public class TestJASM {
 
         System.out.println(clinit.toString());
 
-        assertEquals(0, StackDirector.reduceInstructions(new DecompilerReducer(System.out::println), clinit.code, new LinkedList<>()).size());
+        DecompilerReducer reducer = new DecompilerReducer(clinit, statement -> {
+            System.out.println(statement.toString());
+        }, () -> tempCounter++);
+
+        assertEquals(0, StackDirector.reduceInstructions(reducer, clinit.code, new LinkedList<>()).size());
 
         assertNotNull(bmm);
 
