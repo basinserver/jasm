@@ -51,4 +51,9 @@ public class ExitTry extends Instruction {
     public Instruction fromString(String str) {
         return new ExitTry();
     }
+
+    @Override
+    public boolean isControl() {
+        return true;
+    }
 }

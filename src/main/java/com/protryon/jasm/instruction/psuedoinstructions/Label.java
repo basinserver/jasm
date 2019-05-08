@@ -58,4 +58,9 @@ public class Label extends Instruction {
     public Instruction fromString(String str) {
         return new Label(str.substring(1));
     }
+
+    @Override
+    public boolean isControl() {
+        return true;
+    }
 }

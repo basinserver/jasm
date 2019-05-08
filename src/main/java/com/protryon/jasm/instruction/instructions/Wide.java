@@ -63,5 +63,9 @@ public class Wide extends Instruction {
         return null;
     }
 
+    @Override
+    public boolean isControl() {
+        return false;
+    }
 }
         

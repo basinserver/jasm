@@ -96,7 +96,11 @@ Object.keys(spec).forEach(name => {
             } else if (x.name === 'byte') {
                x.name = 'byte_';
            }
-        })
+        });
+        ins.branching = false;
+        if (ins.args.filter(x => x.name === 'branchbyte').length > 0) {
+            ins.branching = true;
+        }
         for (let form of ins.forms) {
             opcodeTable[parseInt(form.opcode)] = upperFirst(form.name);
             form.instruction = ins;
@@ -213,6 +217,11 @@ ${name in customPops ? `return ${customPops[name]};` :
     @Override
     public Instruction fromString(String str) {
         return null;
+    }
+    
+    @Override
+    public boolean isControl() {
+        return ${ins.branching ? 'true' : 'false'};
     }
 
 }

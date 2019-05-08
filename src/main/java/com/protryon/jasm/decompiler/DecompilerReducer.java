@@ -14,11 +14,9 @@ import com.protryon.jasm.instruction.psuedoinstructions.ExitTry;
 import com.protryon.jasm.instruction.psuedoinstructions.Label;
 import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.Tuple3;
-import com.shapesecurity.functional.Tuple4;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;

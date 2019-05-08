@@ -60,4 +60,9 @@ public class EnterTry extends Instruction {
     public Instruction fromString(String str) {
         return null;
     }
+
+    @Override
+    public boolean isControl() {
+        return true;
+    }
 }

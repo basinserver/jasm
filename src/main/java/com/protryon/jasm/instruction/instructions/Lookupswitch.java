@@ -15,8 +15,8 @@ import java.util.ArrayList;
 
 public class Lookupswitch extends Instruction {
 
-    Label _default;
-    Pair<Integer, Label>[] pairs;
+    public Label _default;
+    public Pair<Integer, Label>[] pairs;
     
     @Override
     public String name() {
@@ -78,5 +78,9 @@ public class Lookupswitch extends Instruction {
         return null;
     }
 
+    @Override
+    public boolean isControl() {
+        return true;
+    }
 }
         

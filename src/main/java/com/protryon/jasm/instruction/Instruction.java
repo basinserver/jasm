@@ -28,4 +28,5 @@ public abstract class Instruction {
 
     public abstract Instruction fromString(String str);
 
+    public abstract boolean isControl();
 }

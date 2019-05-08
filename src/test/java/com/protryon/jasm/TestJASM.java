@@ -1,7 +1,11 @@
 package com.protryon.jasm;
 
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.utils.CodeGenerationUtils;
+import com.protryon.jasm.decompiler.ControlFlowGraph;
 import com.protryon.jasm.decompiler.DecompilerReducer;
+import com.protryon.jasm.decompiler.StackEntry;
+import com.protryon.jasm.instruction.Instruction;
 import com.protryon.jasm.instruction.StackDirector;
 import org.junit.jupiter.api.Test;
 
@@ -32,11 +36,25 @@ public class TestJASM {
 
         System.out.println(clinit.toString());
 
-        DecompilerReducer reducer = new DecompilerReducer(clinit, statement -> {
-            System.out.println(statement.toString());
-        }, () -> tempCounter++);
+        ControlFlowGraph g = new ControlFlowGraph(clinit);
 
-        assertEquals(0, StackDirector.reduceInstructions(reducer, clinit.code, new LinkedList<>()).size());
+
+        LinkedList<StackEntry<Expression>> stack = new LinkedList<>();
+        for (ControlFlowGraph.Node n : g.nodes) {
+            DecompilerReducer reducer = new DecompilerReducer(clinit, statement -> {
+                System.out.println(statement.toString());
+            }, () -> tempCounter++);
+
+            /*if (n.instructions.size() > 0) {
+                Instruction last = n.instructions.getLast();
+                if (last.isControl()) {
+                    n.instructions.removeLast();
+                }
+            }*/
+            stack = StackDirector.reduceInstructions(reducer, n.instructions, stack);
+        }
+        assertEquals(0, stack.size());
+
 
         assertNotNull(bmm);
 

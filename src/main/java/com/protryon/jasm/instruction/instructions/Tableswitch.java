@@ -14,10 +14,10 @@ import java.util.ArrayList;
 
 public class Tableswitch extends Instruction {
 
-    Label _default;
-    int low;
-    int high;
-    Label[] offsets;
+    public Label _default;
+    public int low;
+    public int high;
+    public Label[] offsets;
     
     @Override
     public String name() {
@@ -81,5 +81,9 @@ public class Tableswitch extends Instruction {
         return null;
     }
 
+    @Override
+    public boolean isControl() {
+        return true;
+    }
 }
         
