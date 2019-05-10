@@ -1,16 +1,13 @@
 package com.protryon.jasm.instruction;
 
-import com.google.common.collect.Lists;
 import com.protryon.jasm.Constant;
 import com.protryon.jasm.Method;
 import com.protryon.jasm.instruction.instructions.*;
 import com.protryon.jasm.instruction.psuedoinstructions.EnterTry;
 import com.protryon.jasm.instruction.psuedoinstructions.ExitTry;
 import com.protryon.jasm.instruction.psuedoinstructions.Label;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import com.shapesecurity.functional.data.ImmutableList;
+import com.shapesecurity.functional.data.Maybe;
 
 public final class ManualStackDirector {
 
@@ -18,7 +15,7 @@ public final class ManualStackDirector {
 
     }
 
-    protected static <T> void reduceInstruction(StackReducer<T> reducer, Instruction instruction, LinkedList<T> stack) {
+    protected static <T> ImmutableList<T> reduceInstruction(StackReducer<T> reducer, Instruction instruction, ImmutableList<T> stack) {
         switch (instruction.opcode()) {
             case 88: {
                 throw new UnsupportedOperationException("pop2");
@@ -52,75 +49,78 @@ public final class ManualStackDirector {
             }
             case 185: { // invokeinterface
                 Method method = ((Constant<Method>) ((Invokeinterface) instruction).indexbyte).value;
-                List<T> arguments = new ArrayList<>();
-                for (int i = 0; i < method.descriptor.parameters.size(); ++i) {
-                    arguments.add(stack.pop());
+                ImmutableList<T> arguments = stack.take(method.descriptor.parameters.size()).reverse();
+                stack = stack.drop(method.descriptor.parameters.size());
+                T objectref = stack.maybeHead().fromJust();
+                stack = stack.maybeTail().fromJust();
+                Maybe<T> returnValue = reducer.reduceInvokeinterface((Invokeinterface) instruction, objectref, arguments.toArrayList());
+                if (returnValue.isJust()) {
+                    stack = stack.cons(returnValue.fromJust());
                 }
-                Lists.reverse(arguments);
-                T objectref = stack.pop();
-                reducer.reduceInvokeinterface((Invokeinterface) instruction, objectref, arguments).foreach(stack::push);
                 break;
             }
             case 184: { // invokestatic
                 Method method = ((Constant<Method>) ((Invokestatic) instruction).indexbyte).value;
-                List<T> arguments = new ArrayList<>();
-                for (int i = 0; i < method.descriptor.parameters.size(); ++i) {
-                    arguments.add(stack.pop());
+                ImmutableList<T> arguments = stack.take(method.descriptor.parameters.size()).reverse();
+                stack = stack.drop(method.descriptor.parameters.size());
+                Maybe<T> returnValue = reducer.reduceInvokestatic((Invokestatic) instruction, arguments.toArrayList());
+                if (returnValue.isJust()) {
+                    stack = stack.cons(returnValue.fromJust());
                 }
-                Lists.reverse(arguments);
-                reducer.reduceInvokestatic((Invokestatic) instruction, arguments).foreach(stack::push);
                 break;
             }
             case 182: { // invokevirtual
                 Method method = ((Constant<Method>) ((Invokevirtual) instruction).indexbyte).value;
-                List<T> arguments = new ArrayList<>();
-                for (int i = 0; i < method.descriptor.parameters.size(); ++i) {
-                    arguments.add(stack.pop());
+                ImmutableList<T> arguments = stack.take(method.descriptor.parameters.size()).reverse();
+                stack = stack.drop(method.descriptor.parameters.size());
+                T objectref = stack.maybeHead().fromJust();
+                stack = stack.maybeTail().fromJust();
+                Maybe<T> returnValue = reducer.reduceInvokevirtual((Invokevirtual) instruction, objectref, arguments.toArrayList());
+                if (returnValue.isJust()) {
+                    stack = stack.cons(returnValue.fromJust());
                 }
-                Lists.reverse(arguments);
-                T objectref = stack.pop();
-                reducer.reduceInvokevirtual((Invokevirtual) instruction, objectref, arguments).foreach(stack::push);
                 break;
             }
             case 183: { // invokespecial
                 Method method = ((Constant<Method>) ((Invokespecial) instruction).indexbyte).value;
-                List<T> arguments = new ArrayList<>();
-                for (int i = 0; i < method.descriptor.parameters.size(); ++i) {
-                    arguments.add(stack.pop());
+                ImmutableList<T> arguments = stack.take(method.descriptor.parameters.size()).reverse();
+                stack = stack.drop(method.descriptor.parameters.size());
+                T objectref = stack.maybeHead().fromJust();
+                stack = stack.maybeTail().fromJust();
+                Maybe<T> returnValue = reducer.reduceInvokespecial((Invokespecial) instruction, objectref, arguments.toArrayList());
+                if (returnValue.isJust()) {
+                    stack = stack.cons(returnValue.fromJust());
                 }
-                Lists.reverse(arguments);
-                T objectref = stack.pop();
-                reducer.reduceInvokespecial((Invokespecial) instruction, objectref, arguments).foreach(stack::push);
                 break;
             }
             case 186: { // invokedynamic
                 throw new UnsupportedOperationException("invokedynamic in reducer");
             }
             case 171: { // lookupswitch
-                T key = stack.pop();
+                T key = stack.maybeHead().fromJust();
+                stack = stack.maybeTail().fromJust();
                 reducer.reduceLookupswitch((Lookupswitch) instruction, key);
                 break;
             }
             case 170: { // tableswitch
-                T key = stack.pop();
+                T key = stack.maybeHead().fromJust();
+                stack = stack.maybeTail().fromJust();
                 reducer.reduceTableswitch((Tableswitch) instruction, key);
                 break;
             }
             case 191: { // athrow
-                T objectref = stack.pop();
+                T objectref = stack.maybeHead().fromJust();
+                stack = stack.maybeTail().fromJust();
                 T pushed = reducer.reduceAthrow((Athrow) instruction, objectref);
                 throw new UnsupportedOperationException("TODO: find catch block for exception type then modify stack at that point");
                 // break;
             }
             case 197: { // multianewarray
                 Multianewarray multianewarray = (Multianewarray) instruction;
-                List<T> dimensions = new ArrayList<>(multianewarray.dimensions);
-                for (int i = 0; i < dimensions.size(); ++i) {
-                    dimensions.add(stack.pop());
-                }
-                Lists.reverse(dimensions);
-                T pushed = reducer.reduceMultianewarray(multianewarray, dimensions);
-                stack.push(pushed);
+                ImmutableList<T> dimensions = stack.take(multianewarray.dimensions).reverse();
+                stack = stack.drop(multianewarray.dimensions);
+                T pushed = reducer.reduceMultianewarray(multianewarray, dimensions.toArrayList());
+                stack = stack.cons(pushed);
                 break;
             }
 
@@ -140,5 +140,6 @@ public final class ManualStackDirector {
             default:
                 throw new UnsupportedOperationException("Unknown opcode in reducer: " + instruction.opcode());
         }
+        return stack;
     }
 }

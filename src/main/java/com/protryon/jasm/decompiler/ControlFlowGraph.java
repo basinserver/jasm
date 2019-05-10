@@ -28,6 +28,9 @@ public class ControlFlowGraph {
 
         public abstract ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack);
 
+        @Override
+        public abstract String toString();
+
     }
 
     public class NodeEndJump extends NodeEnd {
@@ -41,6 +44,11 @@ public class ControlFlowGraph {
         @Override
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
             return ImmutableList.of(Pair.of(labelMap.get(this.target), stack));
+        }
+
+        @Override
+        public String toString() {
+            return "goto " + target.name;
         }
     }
 
@@ -56,10 +64,16 @@ public class ControlFlowGraph {
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
             return ImmutableList.of(Pair.of(this.fallthrough, stack));
         }
+
+        @Override
+        public String toString() {
+            return "fall";
+        }
     }
 
     public class NodeEndBranch extends NodeEnd {
 
+        public StackEntry<Expression> memoCondition = null;
         public Instruction branch;
         public Node fallthrough;
         public Label target;
@@ -72,18 +86,33 @@ public class ControlFlowGraph {
 
         @Override
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
+            this.memoCondition = stack.maybeHead().fromJust();
             return ImmutableList.of(
-                Pair.of(this.fallthrough, stack.maybeInit().fromJust()),
-                Pair.of(labelMap.get(this.target), stack.maybeInit().fromJust())
+                Pair.of(this.fallthrough, stack.maybeTail().fromJust()),
+                Pair.of(labelMap.get(this.target), stack.maybeTail().fromJust())
             );
+        }
+
+        @Override
+        public String toString() {
+            return memoCondition.value.toString() + ": " + branch.toString();
         }
     }
 
     public class NodeEndThrow extends NodeEnd {
 
+        public StackEntry<Expression> memoException = null;
+
         @Override
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
-            //TODO
+            this.memoException = stack.maybeHead().fromJust();
+            //TODO: we need a temp var here
+            return ImmutableList.of(Pair.of(null, stack.maybeHead().toList()));
+        }
+
+        @Override
+        public String toString() {
+            return "throw";
         }
     }
 
@@ -99,6 +128,11 @@ public class ControlFlowGraph {
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
             return ImmutableList.of(Pair.of(fallthrough, stack.maybeInit().fromJust()));
         }
+
+        @Override
+        public String toString() {
+            return "monitor-enter-fall";
+        }
     }
 
     public class NodeEndMonitorExit extends NodeEnd {
@@ -113,6 +147,11 @@ public class ControlFlowGraph {
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
             return ImmutableList.of(Pair.of(fallthrough, stack.maybeInit().fromJust()));
         }
+
+        @Override
+        public String toString() {
+            return "monitor-exit-fall";
+        }
     }
 
     public class NodeEndReturn extends NodeEnd {
@@ -126,6 +165,11 @@ public class ControlFlowGraph {
         @Override
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
             return ImmutableList.empty();
+        }
+
+        @Override
+        public String toString() {
+            return ret.toString();
         }
     }
 
@@ -142,6 +186,11 @@ public class ControlFlowGraph {
             return Arrays.stream(this.instruction.pairs).collect(ImmutableList.collector()).map(pair -> Pair.of(labelMap.get(pair.right), stack.maybeInit().fromJust()))
                 .cons(Pair.of(labelMap.get(instruction._default), stack.maybeInit().fromJust()));
         }
+
+        @Override
+        public String toString() {
+            return instruction.toString();
+        }
     }
 
     public class NodeEndTableswitch extends NodeEnd {
@@ -156,6 +205,11 @@ public class ControlFlowGraph {
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
             return Arrays.stream(this.instruction.offsets).collect(ImmutableList.collector()).map(label -> Pair.of(labelMap.get(label), stack.maybeInit().fromJust()))
                 .cons(Pair.of(labelMap.get(instruction._default), stack.maybeInit().fromJust()));
+        }
+
+        @Override
+        public String toString() {
+            return instruction.toString();
         }
     }
 
@@ -174,6 +228,11 @@ public class ControlFlowGraph {
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
             return ImmutableList.of(Pair.of(labelMap.get(subroutine), ((ImmutableList) stack).cons(fallthrough)));
         }
+
+        @Override
+        public String toString() {
+            return "callsub " + subroutine.name;
+        }
     }
 
     public class NodeEndRetSub extends NodeEnd {
@@ -182,6 +241,11 @@ public class ControlFlowGraph {
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
             Node node = (Node) ((ImmutableList) stack).maybeHead().fromJust();
             return ImmutableList.of(Pair.of(node, stack.maybeInit().fromJust()));
+        }
+
+        @Override
+        public String toString() {
+            return "retsub";
         }
     }
 
@@ -270,12 +334,18 @@ public class ControlFlowGraph {
                 } else if (instruction instanceof Ifnull) {
                     currentBlock.end = new NodeEndBranch(instruction, nextBlock, ((Ifnull) instruction).branchbyte);
                 } else if (instruction instanceof Label) {
-                    currentBlock.end = new NodeEndFallthrough(nextBlock);
+                    if (currentBlock.instructions.size() == 0) {
+                        currentBlock = null;
+                    } else {
+                        currentBlock.end = new NodeEndFallthrough(nextBlock);
+                    }
                     labelMap.put((Label) instruction, nextBlock);
-                } else { // branch
+                } else {
                     throw new RuntimeException("not reached: " + instruction.getClass().getSimpleName());
                 }
-                this.nodes.add(currentBlock);
+                if (currentBlock != null ) {
+                    this.nodes.add(currentBlock);
+                }
                 currentBlock = nextBlock;
             } else {
                 currentBlock.instructions.add(instruction);

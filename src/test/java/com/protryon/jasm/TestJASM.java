@@ -1,16 +1,22 @@
 package com.protryon.jasm;
 
+import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.utils.CodeGenerationUtils;
 import com.protryon.jasm.decompiler.ControlFlowGraph;
+import com.protryon.jasm.decompiler.Decompiler;
 import com.protryon.jasm.decompiler.DecompilerReducer;
 import com.protryon.jasm.decompiler.StackEntry;
 import com.protryon.jasm.instruction.Instruction;
 import com.protryon.jasm.instruction.StackDirector;
+import com.shapesecurity.functional.Pair;
+import com.shapesecurity.functional.data.ImmutableList;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,31 +38,16 @@ public class TestJASM {
 
         Klass bmm = classpath.lookupKlass("bmm");
 
-        Method clinit = bmm.methods.get(1);
-
-        System.out.println(clinit.toString());
-
-        ControlFlowGraph g = new ControlFlowGraph(clinit);
-
-
-        LinkedList<StackEntry<Expression>> stack = new LinkedList<>();
-        for (ControlFlowGraph.Node n : g.nodes) {
-            DecompilerReducer reducer = new DecompilerReducer(clinit, statement -> {
-                System.out.println(statement.toString());
-            }, () -> tempCounter++);
-
-            /*if (n.instructions.size() > 0) {
-                Instruction last = n.instructions.getLast();
-                if (last.isControl()) {
-                    n.instructions.removeLast();
-                }
-            }*/
-            stack = StackDirector.reduceInstructions(reducer, n.instructions, stack);
-        }
-        assertEquals(0, stack.size());
-
-
         assertNotNull(bmm);
+        Method clinit = bmm.methods.get(1);
+        assertNotNull(clinit);
+
+        // System.out.println(clinit.toString());
+
+        MethodDeclaration decompiled = Decompiler.decompileMethod(clinit);
+
+        System.out.println(decompiled);
+
 
         //System.out.println(bmm);
 

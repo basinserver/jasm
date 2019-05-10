@@ -17,6 +17,7 @@ import com.shapesecurity.functional.Tuple3;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -27,38 +28,11 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
     private final Method method;
     private final Consumer<Statement> emitter;
     private final Supplier<Integer> temporaryVariableIndexer;
-
-    private static Type convertType(JType type) {
-        if (type == JType.voidT) {
-            return new VoidType();
-        } else if (type == JType.byteT) {
-            return PrimitiveType.byteType();
-        } else if (type == JType.charT) {
-            return PrimitiveType.charType();
-        } else if (type == JType.shortT) {
-            return PrimitiveType.shortType();
-        } else if (type == JType.intT) {
-            return PrimitiveType.intType();
-        } else if (type == JType.longT) {
-            return PrimitiveType.longType();
-        } else if (type == JType.floatT) {
-            return PrimitiveType.floatType();
-        } else if (type == JType.doubleT) {
-            return PrimitiveType.doubleType();
-        } else if (type == JType.nullT) {
-            return new ClassOrInterfaceType("Object");
-        } else if (type instanceof JType.JTypeArray) {
-            return new ArrayType(convertType(((JType.JTypeArray) type).elementType));
-        } else if (type instanceof JType.JTypeInstance) {
-            return new ClassOrInterfaceType(((JType.JTypeInstance) type).klass.name);
-        } else {
-            throw new UnsupportedOperationException("Unknown type for conversion: " + type.niceName);
-        }
-    }
+    private final HashMap<String, Expression> specialResolutions = new HashMap<>();
 
     private StackEntry<Expression> tempify(StackEntry<Expression> value) {
         String tempName = "t" + this.temporaryVariableIndexer.get();
-        emitter.accept(new ExpressionStmt(new VariableDeclarationExpr(new VariableDeclarator(convertType(value.type), tempName, value.value))));
+        emitter.accept(new ExpressionStmt(new VariableDeclarationExpr(new VariableDeclarator(Decompiler.convertType(value.type), tempName, value.value))));
         return entry(value.type, new NameExpr(tempName));
     }
 
@@ -103,17 +77,17 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceAload_1(Aload_1 instruction) {
-        return entry(method.getOrMakeLocal(1).type, new NameExpr("v0"));
+        return entry(method.getOrMakeLocal(1).type, new NameExpr("v1"));
     }
 
     @Override
     public StackEntry<Expression> reduceAload_2(Aload_2 instruction) {
-        return entry(method.getOrMakeLocal(2).type, new NameExpr("v0"));
+        return entry(method.getOrMakeLocal(2).type, new NameExpr("v2"));
     }
 
     @Override
     public StackEntry<Expression> reduceAload_3(Aload_3 instruction) {
-        return entry(method.getOrMakeLocal(3).type, new NameExpr("v0"));
+        return entry(method.getOrMakeLocal(3).type, new NameExpr("v3"));
     }
 
     @Override
@@ -870,7 +844,7 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceInstanceof(Instanceof instruction, StackEntry<Expression> objectref) {
-        return entry(JType.booleanT, new InstanceOfExpr(objectref.value, (ReferenceType) convertType(JType.instance(((Constant<Klass>) instruction.indexbyte).value))));
+        return entry(JType.booleanT, new InstanceOfExpr(objectref.value, (ReferenceType) Decompiler.convertType(JType.instance(((Constant<Klass>) instruction.indexbyte).value))));
     }
 
     @Override
@@ -1233,16 +1207,15 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceNew(New instruction) {
-        // TODO: we should probably use some temporary sentinel until we get invokespecial
         Klass klass = ((Constant<Klass>) instruction.indexbyte).value;
-        return entry(JType.instance(klass), new ObjectCreationExpr(null, (ClassOrInterfaceType) convertType(JType.instance(klass)), new NodeList<>()));
+        return entry(JType.instance(klass), new ObjectCreationExpr(null, (ClassOrInterfaceType) Decompiler.convertType(JType.instance(klass)), new NodeList<>()));
     }
 
     @Override
     public StackEntry<Expression> reduceNewarray(Newarray instruction, StackEntry<Expression> count) {
         count.type.assertType(JType.intT);
         JType arrayType = JType.array(instruction.atype.type);
-        return entry(arrayType, new ArrayCreationExpr(convertType(arrayType), new NodeList<>(new ArrayCreationLevel(count.value)), null));
+        return entry(arrayType, new ArrayCreationExpr(Decompiler.convertType(arrayType), new NodeList<>(new ArrayCreationLevel(count.value)), null));
     }
 
     @Override
@@ -1275,7 +1248,7 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
     public void reducePutstatic(Putstatic instruction, StackEntry<Expression> value) {
         Field field = ((Constant<Field>) instruction.indexbyte).value;
         field.type.assertType(value.type);
-        emitter.accept(new ExpressionStmt(new AssignExpr(new FieldAccessExpr(new TypeExpr(convertType(JType.instance(field.parent))), field.name), value.value, AssignExpr.Operator.ASSIGN)));
+        emitter.accept(new ExpressionStmt(new AssignExpr(new FieldAccessExpr(new TypeExpr(Decompiler.convertType(JType.instance(field.parent))), field.name), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
@@ -1332,7 +1305,7 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
     @Override
     public Maybe<StackEntry<Expression>> reduceInvokestatic(Invokestatic instruction, List<StackEntry<Expression>> arguments) {
         Method method = ((Constant<Method>) instruction.indexbyte).value;
-        MethodCallExpr expr = new MethodCallExpr(new TypeExpr(convertType(JType.instance(method.parent))), method.name, new NodeList<>(arguments.stream().map(entry -> entry.value).collect(Collectors.toList())));
+        MethodCallExpr expr = new MethodCallExpr(new TypeExpr(Decompiler.convertType(JType.instance(method.parent))), method.name, new NodeList<>(arguments.stream().map(entry -> entry.value).collect(Collectors.toList())));
         if (method.descriptor.returnType == JType.voidT) {
             emitter.accept(new ExpressionStmt(expr));
             return Maybe.empty();

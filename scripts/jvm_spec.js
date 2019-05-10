@@ -264,9 +264,9 @@ const tupleTs = {
 
 const tupleApplications = {
     0: x => '',
-    1: x => `stack.push(${x});`,
-    2: x => `stack.push(${x}.left); stack.push(${x}.right);`,
-    3: x => `stack.push(${x}.a); stack.push(${x}.b); stack.push(${x}.c);`,
+    1: x => `stack = stack.cons(${x});`,
+    2: x => `stack = stack.cons(${x}.left).cons(${x}.right);`,
+    3: x => `stack = stack.cons(${x}.a).cons(${x}.b).cons(${x}.c);`,
 };
 
 const alwaysManual = ['Multianewarray', 'Athrow', 'Dup_x2', 'Dup2', 'Dup2_x1', 'Dup2_x2', 'Pop2'];
@@ -299,6 +299,7 @@ package com.protryon.jasm.instruction;
 import java.util.LinkedList;
 import com.protryon.jasm.instruction.instructions.*;
 import com.shapesecurity.functional.*;
+import com.shapesecurity.functional.data.ImmutableList;
 
 public final class StackDirector {
 
@@ -306,8 +307,8 @@ public final class StackDirector {
 
     }
 
-    public static <T> LinkedList<T> reduceInstructions(StackReducer<T> reducer, Iterable<Instruction> code, LinkedList<T> stackPrefix) {
-        LinkedList<T> stack = stackPrefix;
+    public static <T> ImmutableList<T> reduceInstructions(StackReducer<T> reducer, Iterable<Instruction> code, ImmutableList<T> stackPrefix) {
+        ImmutableList<T> stack = stackPrefix;
         for (Instruction i : code) {
             switch (i.opcode()) {
 ${Object.keys(formList).sort((form1, form2) => formList[form1].opcode - formList[form2].opcode).map(name => {
@@ -317,14 +318,14 @@ ${Object.keys(formList).sort((form1, form2) => formList[form1].opcode - formList
         return '';
     }
 return `            case ${form.opcode}: {
-${ins.popped.slice(0).reverse().map(x => `                T ${x} = stack.pop();`).join('\n')}
+${ins.popped.slice(0).reverse().map(x => `                T ${x} = stack.maybeHead().fromJust();\n                stack = stack.maybeTail().fromJust();`).join('\n')}
                 ${ins.pushed.length === 0 ? '' : tupleTs[ins.pushed.length] + ' pushed = '}reducer.reduce${name}((${name}) i${ins.popped.map(arg => ', ' + arg).join('')});
                 ${tupleApplications[ins.pushed.length]('pushed')}
                 break;
             }`;
 }).filter(x => x.length > 0).join('\n')}
             default:
-                ManualStackDirector.reduceInstruction(reducer, i, stack);
+                stack = ManualStackDirector.reduceInstruction(reducer, i, stack);
             }
         }
         return stack;
