@@ -1,17 +1,14 @@
 package com.protryon.jasm.decompiler;
 
+import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Modifier;
-import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.SimpleName;
-import com.github.javaparser.ast.expr.StringLiteralExpr;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
-import com.protryon.jasm.JType;
-import com.protryon.jasm.Method;
+import com.protryon.jasm.*;
 import com.protryon.jasm.instruction.StackDirector;
 import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.data.ImmutableList;
@@ -28,7 +25,59 @@ public final class Decompiler {
         this.graph = graph;
     }
 
-    public static MethodDeclaration decompileMethod(Method method) {
+    public static CompilationUnit decompileClass(Classpath classpath, Klass klass) {
+        NodeList<Modifier> modifiers = new NodeList<>();
+        if (klass.isPublic) {
+            modifiers.add(new Modifier(Modifier.Keyword.PUBLIC));
+        }
+        if (klass.isAbstract) {
+            modifiers.add(new Modifier(Modifier.Keyword.ABSTRACT));
+        }
+        if (klass.isFinal) {
+            modifiers.add(new Modifier(Modifier.Keyword.FINAL));
+        }
+        Klass extendingKlass = klass.extending;
+        NodeList<ClassOrInterfaceType> extending = new NodeList<>();
+        if (extendingKlass != null && !extendingKlass.name.equals("java/lang/Object")) {
+            extending.add((ClassOrInterfaceType) convertType(JType.instance(klass.extending)));
+        }
+        NodeList<ClassOrInterfaceType> implementing = klass.interfaces.stream().map(iface -> (ClassOrInterfaceType) convertType(JType.instance(iface))).collect(Collectors.toCollection(NodeList::new));
+        NodeList<BodyDeclaration<?>> bodyDeclarations = new NodeList<>();
+        for (Field field : klass.fields.values()) {
+            NodeList<Modifier> fieldModifiers = new NodeList<>();
+            if (field.isPublic) {
+                fieldModifiers.add(new Modifier(Modifier.Keyword.PUBLIC));
+            }
+            if (field.isProtected) {
+                fieldModifiers.add(new Modifier(Modifier.Keyword.PROTECTED));
+            }
+            if (field.isPrivate) {
+                fieldModifiers.add(new Modifier(Modifier.Keyword.PRIVATE));
+            }
+            if (field.isStatic) {
+                fieldModifiers.add(new Modifier(Modifier.Keyword.STATIC));
+            }
+            if (field.isFinal) {
+                fieldModifiers.add(new Modifier(Modifier.Keyword.FINAL));
+            }
+            if (field.isVolatile) {
+                fieldModifiers.add(new Modifier(Modifier.Keyword.VOLATILE));
+            }
+            // TODO: inline clinit definitions for fields here
+            bodyDeclarations.add(new FieldDeclaration(fieldModifiers, new VariableDeclarator(convertType(field.type), field.name)));
+        }
+        for (Method method : klass.methods) {
+            bodyDeclarations.add(decompileMethod(classpath, method));
+        }
+        int lastSlashIndex = klass.name.lastIndexOf("/");
+        String packageName = klass.name.substring(0, lastSlashIndex < 0 ? 0 : lastSlashIndex).replace("/", ".");
+        CompilationUnit compilationUnit = packageName.length() == 0 ? new CompilationUnit() : new CompilationUnit(packageName);
+        String className = klass.name.substring(lastSlashIndex + 1);
+        compilationUnit.addType(new ClassOrInterfaceDeclaration(modifiers, new NodeList<>(), klass.isInterface, new SimpleName(className), new NodeList<>(), extending, implementing, bodyDeclarations));
+        return compilationUnit;
+    }
+
+    public static MethodDeclaration decompileMethod(Classpath classpath, Method method) {
         int[] tempCounter = new int[]{0}; // java hack
 
         ControlFlowGraph g = new ControlFlowGraph(method);
@@ -40,7 +89,20 @@ public final class Decompiler {
         Stack<Pair<ControlFlowGraph.Node, ImmutableList<StackEntry<Expression>>>> pendingNodes = new Stack<>();
         Decompiler decompiler = new Decompiler(g);
 
-        pendingNodes.push(Pair.of(g.nodes.getFirst(), ImmutableList.empty()));
+        int argumentIndex = 0;
+        if (!method.isStatic) {
+            method.getOrMakeLocal(argumentIndex++).setOrAssertType(JType.instance(method.parent));
+        }
+        for (JType argumentType : method.descriptor.parameters) {
+            method.getOrMakeLocal(argumentIndex++).setOrAssertType(argumentType);
+            if (argumentType.computationType == 2) {
+                argumentIndex++;
+            }
+        }
+
+        if (g.nodes.size() > 0) {
+            pendingNodes.push(Pair.of(g.nodes.getFirst(), ImmutableList.empty()));
+        }
         while (!pendingNodes.empty()) {
             var pair = pendingNodes.pop();
             if (memo.contains(pair)) {
@@ -52,13 +114,13 @@ public final class Decompiler {
             }
             if (unclobberedMemo.contains(pair.left)) {
                 // not illegal necessarily but bad!
-                System.out.println("WARNING: clobbered stack state (unbalanced loop)");
+                throw new RuntimeException("WARNING: clobbered stack state (unbalanced loop)");
             }
             unclobberedMemo.add(pair.left);
             memo.add(pair);
             List<Statement> outStatements = new ArrayList<>();
             // System.out.println(statement.toString());
-            DecompilerReducer reducer = new DecompilerReducer(method, outStatements::add, () -> tempCounter[0]++);
+            DecompilerReducer reducer = new DecompilerReducer(classpath, method, outStatements::add, () -> tempCounter[0]++);
             decompiler.basicBlocks.put(pair.left, outStatements);
             var stack = StackDirector.reduceInstructions(reducer, pair.left.instructions, pair.right);
             if (pair.left.end != null) {
@@ -66,7 +128,9 @@ public final class Decompiler {
             }
         }
         List<Statement> outStatements = new ArrayList<>();
-        decompiler.emitNode(g.nodes.getFirst(), outStatements);
+        if (g.nodes.size() > 0) {
+            decompiler.emitNode(g.nodes.getFirst(), outStatements);
+        }
         List<Modifier> modifiers = new ArrayList<>();
         if (method.isPublic) {
             modifiers.add(new Modifier(Modifier.Keyword.PUBLIC));
@@ -90,9 +154,16 @@ public final class Decompiler {
             modifiers.add(new Modifier(Modifier.Keyword.ABSTRACT));
         }
         int[] argumentCounter = new int[]{0};
-        List<Parameter> parameters = method.descriptor.parameters.stream().map(Decompiler::convertType).map(type ->
-            new Parameter(type, new SimpleName("a" + argumentCounter[0]++))
-        ).collect(Collectors.toList());
+        if (!method.isStatic) {
+            argumentCounter[0]++;
+        }
+        List<Parameter> parameters = method.descriptor.parameters.stream().map(type -> {
+            Parameter parameter = new Parameter(convertType(type), new SimpleName("v" + argumentCounter[0]++));
+            if (type.computationType == 2) {
+                argumentCounter[0]++;
+            }
+            return parameter;
+        }).collect(Collectors.toList());
         BlockStmt methodBlock = new BlockStmt(new NodeList<>(outStatements));
         return new MethodDeclaration(new NodeList<>(modifiers), new NodeList<>(), new NodeList<>(), convertType(method.descriptor.returnType), new SimpleName(method.name), new NodeList<>(parameters), new NodeList<>(), methodBlock);
     }
@@ -114,12 +185,14 @@ public final class Decompiler {
             return PrimitiveType.floatType();
         } else if (type == JType.doubleT) {
             return PrimitiveType.doubleType();
+        } else if (type == JType.booleanT) {
+            return PrimitiveType.booleanType();
         } else if (type == JType.nullT) {
             return new ClassOrInterfaceType("Object");
         } else if (type instanceof JType.JTypeArray) {
             return new ArrayType(convertType(((JType.JTypeArray) type).elementType));
         } else if (type instanceof JType.JTypeInstance) {
-            return new ClassOrInterfaceType(((JType.JTypeInstance) type).klass.name);
+            return new ClassOrInterfaceType(((JType.JTypeInstance) type).klass.name.replace("/", "."));
         } else {
             throw new UnsupportedOperationException("Unknown type for conversion: " + type.niceName);
         }

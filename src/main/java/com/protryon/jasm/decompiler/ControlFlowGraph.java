@@ -343,7 +343,7 @@ public class ControlFlowGraph {
                 } else {
                     throw new RuntimeException("not reached: " + instruction.getClass().getSimpleName());
                 }
-                if (currentBlock != null ) {
+                if (currentBlock != null) {
                     this.nodes.add(currentBlock);
                 }
                 currentBlock = nextBlock;

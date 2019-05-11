@@ -2,6 +2,9 @@ package com.protryon.jasm;
 
 import com.shapesecurity.functional.Pair;
 
+import java.util.Arrays;
+import java.util.Stack;
+
 public class JType {
 
     public final String niceName;
@@ -100,13 +103,38 @@ public class JType {
         return o instanceof JType && ((JType) o).javaName.equals(this.javaName);
     }
 
+    public boolean assignableTo(Object o) {
+        if (!(o instanceof JTypeInstance) || !(this instanceof JTypeInstance)) {
+            return this.equals(o);
+        }
+        JTypeInstance other = (JTypeInstance) o;
+        if (other.javaName.equals(this.javaName)) {
+            return true;
+        }
+        Klass assigningKlass = other.klass;
+        Klass currentKlass = ((JTypeInstance) this).klass;
+        Stack<Klass> awaitingKlass = new Stack<>();
+        awaitingKlass.push(assigningKlass);
+        while (!awaitingKlass.isEmpty()) {
+            Klass klass = awaitingKlass.pop();
+            if (currentKlass == klass) {
+                return true;
+            }
+            if (klass.extending != null) {
+                awaitingKlass.push(klass.extending);
+            }
+            klass.interfaces.forEach(awaitingKlass::push);
+        }
+        return false;
+    }
+
     public int hashCode() {
         return this.javaName.hashCode() + 1;
     }
 
     public JType elementType() {
         if (!(this instanceof JTypeArray)) {
-            throw new RuntimeException("Illegal non-array when expecting array type");
+            throw new RuntimeException("Illegal non-array when expecting array type: " + this.toString());
         }
         return ((JTypeArray) this).elementType;
     }
@@ -116,20 +144,42 @@ public class JType {
             return null;
         }
         if (!(this instanceof JTypeInstance)) {
-            throw new RuntimeException("Illegal non-array when expecting array type");
+            throw new RuntimeException("Illegal non-instance when expecting instance type: " + this.toString());
         }
         return ((JTypeInstance) this).klass;
     }
 
+    public void assertReference() {
+        if (this != nullT && !(this instanceof JTypeInstance) && !(this instanceof JTypeArray)) {
+            throw new RuntimeException("Illegal non-instance when expecting instance type: " + this.toString());
+        }
+    }
+
     public void assertType(JType other) {
         if (!this.equals(other)) {
-            throw new RuntimeException("Got type \"" + this.niceName + "\" when expecting type \"" + other.niceName + "\"");
+            throw new RuntimeException("Got type \"" + this.niceName + "\" when expecting type \"" + (other == null ? "NULL" : other.niceName) + "\"");
+        }
+    }
+
+    public void assertAssignableTo(JType to) {
+        if (!this.assignableTo(to)) {
+            throw new RuntimeException("Got type \"" + this.niceName + "\" when expecting type \"" + (to == null ? "NULL" : to.niceName) + "\"");
+        }
+    }
+
+    public boolean isTypes(JType... others) {
+        return Arrays.asList(others).contains(this);
+    }
+
+    public void assertTypes(JType... others) {
+        if (!isTypes(others)) {
+            throw new RuntimeException("Got type \"" + this.niceName + "\" when expecting type other types.");
         }
     }
 
     public void assertComputationType(int type) {
         if (this.computationType != type) {
-            throw new RuntimeException("Got type \"" + this.niceName + "\" when expecting computation type \"" + type+ "\"");
+            throw new RuntimeException("Got type \"" + this.niceName + "\" when expecting computation type \"" + type + "\"");
         }
     }
 }
