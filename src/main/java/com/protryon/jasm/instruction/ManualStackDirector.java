@@ -1,6 +1,7 @@
 package com.protryon.jasm.instruction;
 
 import com.protryon.jasm.Constant;
+import com.protryon.jasm.Dynamic;
 import com.protryon.jasm.Method;
 import com.protryon.jasm.instruction.instructions.*;
 import com.protryon.jasm.instruction.psuedoinstructions.EnterTry;
@@ -94,7 +95,14 @@ public final class ManualStackDirector {
                 break;
             }
             case 186: { // invokedynamic
-                throw new UnsupportedOperationException("invokedynamic in reducer");
+                Dynamic dynamic = ((Constant<Dynamic>) ((Invokedynamic) instruction).indexbyte).value;
+                ImmutableList<T> arguments = stack.take(dynamic.nameAndType.type.right().fromJust().parameters.size()).reverse();
+                stack = stack.drop(dynamic.nameAndType.type.right().fromJust().parameters.size());
+                Maybe<T> returnValue = reducer.reduceInvokedynamic((Invokedynamic) instruction, arguments.toArrayList());
+                if (returnValue.isJust()) {
+                    stack = stack.cons(returnValue.fromJust());
+                }
+                break;
             }
             case 171: { // lookupswitch
                 T key = stack.maybeHead().fromJust();

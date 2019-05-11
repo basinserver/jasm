@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,7 +49,9 @@ public class TestJASM {
         for (Klass klass : classpath.getKlasses().values()) {
             try {
                 CompilationUnit decompiled = Decompiler.decompileClass(classpath, klass);
-                Files.write(outDir.toPath().resolve(klass.name + ".java"), decompiled.toString().getBytes(Charsets.UTF_8));
+                Path javaPath = outDir.toPath().resolve(klass.name + ".java");
+                javaPath.getParent().toFile().mkdirs();
+                Files.write(javaPath, decompiled.toString().getBytes(Charsets.UTF_8));
             } catch (Exception e) {
                 System.err.println("failed to decompile " + klass.name + ":");
                 e.printStackTrace();

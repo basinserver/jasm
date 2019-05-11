@@ -1,10 +1,15 @@
 package com.protryon.jasm.decompiler;
 
+import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.IntegerLiteralExpr;
+import com.github.javaparser.ast.expr.NullLiteralExpr;
+import com.protryon.jasm.JType;
 import com.protryon.jasm.Method;
 import com.protryon.jasm.instruction.Instruction;
 import com.protryon.jasm.instruction.instructions.*;
 import com.protryon.jasm.instruction.psuedoinstructions.Label;
+import com.shapesecurity.functional.F;
 import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.data.ImmutableList;
 
@@ -22,6 +27,103 @@ public class ControlFlowGraph {
         this.method = method;
         this.nodes = new LinkedList<>();
         this.create();
+    }
+
+
+    private static final HashMap<Class<? extends Instruction>, F<ImmutableList<StackEntry<Expression>>, Pair<StackEntry<Expression>, ImmutableList<StackEntry<Expression>>>>> conditionCreators = new HashMap<>();
+
+    static {
+        // inverted for if statement conditions
+        conditionCreators.put(If_acmpeq.class, stack -> {
+            var value1 = stack.maybeHead().fromJust();
+            var value2 = stack.index(1).fromJust();
+            stack = stack.drop(2);
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.NOT_EQUALS)), stack);
+        });
+        conditionCreators.put(If_acmpne.class, stack -> {
+            var value1 = stack.maybeHead().fromJust();
+            var value2 = stack.index(1).fromJust();
+            stack = stack.drop(2);
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.EQUALS)), stack);
+        });
+
+        conditionCreators.put(If_icmpeq.class, stack -> {
+            var value1 = stack.maybeHead().fromJust();
+            var value2 = stack.index(1).fromJust();
+            stack = stack.drop(2);
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.NOT_EQUALS)), stack);
+        });
+        conditionCreators.put(If_icmpne.class, stack -> {
+            var value1 = stack.maybeHead().fromJust();
+            var value2 = stack.index(1).fromJust();
+            stack = stack.drop(2);
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.EQUALS)), stack);
+        });
+        conditionCreators.put(If_icmplt.class, stack -> {
+            var value1 = stack.maybeHead().fromJust();
+            var value2 = stack.index(1).fromJust();
+            stack = stack.drop(2);
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.GREATER_EQUALS)), stack);
+        });
+        conditionCreators.put(If_icmpge.class, stack -> {
+            var value1 = stack.maybeHead().fromJust();
+            var value2 = stack.index(1).fromJust();
+            stack = stack.drop(2);
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.LESS)), stack);
+        });
+        conditionCreators.put(If_icmpgt.class, stack -> {
+            var value1 = stack.maybeHead().fromJust();
+            var value2 = stack.index(1).fromJust();
+            stack = stack.drop(2);
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.LESS_EQUALS)), stack);
+        });
+        conditionCreators.put(If_icmple.class, stack -> {
+            var value1 = stack.maybeHead().fromJust();
+            var value2 = stack.index(1).fromJust();
+            stack = stack.drop(2);
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.GREATER)), stack);
+        });
+
+        conditionCreators.put(Ifeq.class, stack -> {
+            var head = stack.maybeHead().fromJust();
+            stack = stack.maybeTail().fromJust();
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(head.value, new IntegerLiteralExpr(0), BinaryExpr.Operator.NOT_EQUALS)), stack);
+        });
+        conditionCreators.put(Ifne.class, stack -> {
+            var head = stack.maybeHead().fromJust();
+            stack = stack.maybeTail().fromJust();
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(head.value, new IntegerLiteralExpr(0), BinaryExpr.Operator.EQUALS)), stack);
+        });
+        conditionCreators.put(Iflt.class, stack -> {
+            var head = stack.maybeHead().fromJust();
+            stack = stack.maybeTail().fromJust();
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(head.value, new IntegerLiteralExpr(0), BinaryExpr.Operator.GREATER_EQUALS)), stack);
+        });
+        conditionCreators.put(Ifge.class, stack -> {
+            var head = stack.maybeHead().fromJust();
+            stack = stack.maybeTail().fromJust();
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(head.value, new IntegerLiteralExpr(0), BinaryExpr.Operator.LESS)), stack);
+        });
+        conditionCreators.put(Ifgt.class, stack -> {
+            var head = stack.maybeHead().fromJust();
+            stack = stack.maybeTail().fromJust();
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(head.value, new IntegerLiteralExpr(0), BinaryExpr.Operator.LESS_EQUALS)), stack);
+        });
+        conditionCreators.put(Ifle.class, stack -> {
+            var head = stack.maybeHead().fromJust();
+            stack = stack.maybeTail().fromJust();
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(head.value, new IntegerLiteralExpr(0), BinaryExpr.Operator.GREATER)), stack);
+        });
+        conditionCreators.put(Ifnonnull.class, stack -> {
+            var head = stack.maybeHead().fromJust();
+            stack = stack.maybeTail().fromJust();
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(head.value, new NullLiteralExpr(), BinaryExpr.Operator.EQUALS)), stack);
+        });
+        conditionCreators.put(Ifnull.class, stack -> {
+            var head = stack.maybeHead().fromJust();
+            stack = stack.maybeTail().fromJust();
+            return Pair.of(new StackEntry<>(JType.booleanT, new BinaryExpr(head.value, new NullLiteralExpr(), BinaryExpr.Operator.NOT_EQUALS)), stack);
+        });
     }
 
     public abstract class NodeEnd {
@@ -73,7 +175,7 @@ public class ControlFlowGraph {
 
     public class NodeEndBranch extends NodeEnd {
 
-        public StackEntry<Expression> memoCondition = null;
+        public StackEntry<Expression> invertedMemoCondition = null;
         public Instruction branch;
         public Node fallthrough;
         public Label target;
@@ -86,16 +188,18 @@ public class ControlFlowGraph {
 
         @Override
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
-            this.memoCondition = stack.maybeHead().fromJust();
+            var pair = conditionCreators.get(branch.getClass()).apply(stack);
+            this.invertedMemoCondition = pair.left;
+            stack = pair.right;
             return ImmutableList.of(
-                Pair.of(this.fallthrough, stack.maybeTail().fromJust()),
-                Pair.of(labelMap.get(this.target), stack.maybeTail().fromJust())
+                Pair.of(this.fallthrough, stack),
+                Pair.of(labelMap.get(this.target), stack)
             );
         }
 
         @Override
         public String toString() {
-            return memoCondition.value.toString() + ": " + branch.toString();
+            return invertedMemoCondition.value.toString() + ": " + branch.toString();
         }
     }
 
@@ -311,6 +415,8 @@ public class ControlFlowGraph {
                     currentBlock.end = new NodeEndBranch(instruction, nextBlock, ((If_icmpeq) instruction).branchbyte);
                 } else if (instruction instanceof If_icmpge) {
                     currentBlock.end = new NodeEndBranch(instruction, nextBlock, ((If_icmpge) instruction).branchbyte);
+                } else if (instruction instanceof If_icmpgt) {
+                    currentBlock.end = new NodeEndBranch(instruction, nextBlock, ((If_icmpgt) instruction).branchbyte);
                 } else if (instruction instanceof If_icmple) {
                     currentBlock.end = new NodeEndBranch(instruction, nextBlock, ((If_icmple) instruction).branchbyte);
                 } else if (instruction instanceof If_icmplt) {

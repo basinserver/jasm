@@ -104,6 +104,9 @@ public class JType {
     }
 
     public boolean assignableTo(Object o) {
+        if (o == null && this instanceof JTypeInstance) {
+            return true;
+        }
         if (!(o instanceof JTypeInstance) || !(this instanceof JTypeInstance)) {
             return this.equals(o);
         }
@@ -111,8 +114,8 @@ public class JType {
         if (other.javaName.equals(this.javaName)) {
             return true;
         }
-        Klass assigningKlass = other.klass;
-        Klass currentKlass = ((JTypeInstance) this).klass;
+        Klass assigningKlass = ((JTypeInstance) this).klass;
+        Klass currentKlass = other.klass;
         Stack<Klass> awaitingKlass = new Stack<>();
         awaitingKlass.push(assigningKlass);
         while (!awaitingKlass.isEmpty()) {

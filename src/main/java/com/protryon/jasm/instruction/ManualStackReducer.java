@@ -18,9 +18,7 @@ abstract class ManualStackReducer<T> {
 
     public abstract Maybe<T> reduceInvokevirtual(Invokevirtual instruction, T objectref, List<T> arguments);
 
-    public final Maybe<T> reduceInvokedynamic(Invokedynamic instruction) {
-        throw new UnsupportedOperationException("Invokedynamic reduction");
-    }
+    public abstract Maybe<T> reduceInvokedynamic(Invokedynamic instruction, List<T> arguments);
 
     public abstract Maybe<T> reduceInvokespecial(Invokespecial instruction, T objectref, List<T> arguments);
 

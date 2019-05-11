@@ -113,7 +113,7 @@ public abstract class CConstant<T> {
         return field;
     }
 
-    protected Constant toConstant(Classpath classpath, F<Integer, Constant> lookup) {
+    protected Constant toConstant(Classpath classpath, Stage1Class klass, F<Integer, Constant> lookup) {
         NameAndType nameAndType;
         switch (this.type) {
             case 1:
@@ -177,11 +177,17 @@ public abstract class CConstant<T> {
                 CMethodType methodType = (CMethodType) this;
                 return new Constant<>(MethodDescriptor.fromString(classpath, (String) lookup.apply(methodType.value).value));
             case 17:
-                throw new UnsupportedOperationException("CDynamic");
-                //return new CDynamic(in.readUnsignedShort(), in.readUnsignedShort());
             case 18:
-                return new Constant<>((CInvokeDynamic) this); // TODO: implement
-                // throw new UnsupportedOperationException("CInvokeDynamic");
+                CInvokeDynamic invokeDynamic = (CInvokeDynamic) this;
+                CBootstrapMethod bootstrapMethod = klass.bootstrapMethods[invokeDynamic.value.left];
+                Constant<MethodHandle> methodHandle = lookup.apply(bootstrapMethod.methodRef);
+                Constant[] arguments = new Constant[bootstrapMethod.arguments.length];
+                for (int i = 0; i < bootstrapMethod.arguments.length; ++i) {
+                    arguments[i] = lookup.apply(bootstrapMethod.arguments[i]);
+                }
+                BootstrapMethod newBootstrapMethod = new BootstrapMethod(methodHandle.value, arguments);
+                Constant<NameAndType> bootstrapNameAndType = lookup.apply(invokeDynamic.value.right);
+                return new Constant<>(new Dynamic(this.type == 18, newBootstrapMethod, bootstrapNameAndType.value));
             case 19:
                 throw new UnsupportedOperationException("CModule");
                 //return new CModule(in.readUnsignedShort());

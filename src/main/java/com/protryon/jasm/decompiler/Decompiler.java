@@ -114,15 +114,16 @@ public final class Decompiler {
             }
             if (unclobberedMemo.contains(pair.left)) {
                 // not illegal necessarily but bad!
-                throw new RuntimeException("WARNING: clobbered stack state (unbalanced loop)");
+                // throw new RuntimeException("WARNING: clobbered stack state (unbalanced loop)");
+
             }
             unclobberedMemo.add(pair.left);
             memo.add(pair);
             List<Statement> outStatements = new ArrayList<>();
             // System.out.println(statement.toString());
             DecompilerReducer reducer = new DecompilerReducer(classpath, method, outStatements::add, () -> tempCounter[0]++);
-            decompiler.basicBlocks.put(pair.left, outStatements);
             var stack = StackDirector.reduceInstructions(reducer, pair.left.instructions, pair.right);
+            decompiler.basicBlocks.put(pair.left, outStatements);
             if (pair.left.end != null) {
                 pair.left.end.applyToStack(stack).forEach(pendingNodes::add);
             }
@@ -230,14 +231,15 @@ public final class Decompiler {
             if (fallthroughTerminator.end instanceof ControlFlowGraph.NodeEndJump) {
                 ControlFlowGraph.Node jumpTarget = graph.labelMap.get(((ControlFlowGraph.NodeEndJump) fallthroughTerminator.end).target);
                 if (jumpTarget == node) {
-                    outStatements.add(new WhileStmt(branch.memoCondition.value, block));
+                    outStatements.add(new WhileStmt(branch.invertedMemoCondition.value, block));
                     isLoop = true;
                 } else {
-                    throw new RuntimeException("not reached");
+                    // TODO: elses and other?
+                    // throw new RuntimeException("not reached");
                 }
             }
             if (!isLoop) {
-                outStatements.add(new IfStmt(branch.memoCondition.value, block, null));
+                outStatements.add(new IfStmt(branch.invertedMemoCondition.value, block, null));
             }
             emitted.addAll(fallEmission.toArrayList());
             emitted.add(node);

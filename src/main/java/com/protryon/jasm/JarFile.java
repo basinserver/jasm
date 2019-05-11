@@ -1,10 +1,6 @@
 package com.protryon.jasm;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -14,13 +10,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class JarFile {
+
     public JarFile(File f) throws IOException {
         this(f.toURI().toURL());
-    }
-
-    @Deprecated
-    public JarFile() {
-        this.url = null;
     }
 
     private final URL url;

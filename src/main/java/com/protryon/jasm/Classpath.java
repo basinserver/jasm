@@ -2,35 +2,23 @@ package com.protryon.jasm;
 
 import com.protryon.jasm.stage1.Stage1Class;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class Classpath {
 
     private Map<String, Resource> resources = new LinkedHashMap<>();
     private Map<String, Klass> klasses = new LinkedHashMap<>();
     private Map<String, Klass> dummyKlasses = new LinkedHashMap<>();
+    private static Map<String, Klass> jreClasses = new LinkedHashMap<>();
 
-    public Classpath(String... paths) throws IOException {
-        for (String path : paths) {
-            if (path.endsWith(".jar")) {
-                JarFile jar = new JarFile(new File(path));
-                jar.getResources().forEach((key, value) -> {
-                    resources.put(key, new Resource("jar:" + path + ":" + key, value));
-                });
-            } else if (path.endsWith(".class")) {
-                resources.put(path, new Resource(path, Files.readAllBytes(Paths.get(path))));
-            } else {
-                recurDir(Paths.get(path), Paths.get(path) ,0);
-            }
-        }
+    private static Map<String, Stage1Class> initStage1(Map<String, Resource> resources) {
         Map<String, Stage1Class> stage1 = new LinkedHashMap<>();
         resources.forEach((key, value) -> {
             if (key.endsWith(".class")) {
@@ -50,6 +38,80 @@ public class Classpath {
                 }
             }
         });
+        return stage1;
+    }
+
+    static {
+        String javaHome = System.getProperty("java.home");
+        if (javaHome == null) {
+            throw new RuntimeException("Please define JAVA_HOME");
+        }
+        Path jmods = Paths.get(javaHome, "jmods");
+        if (!jmods.toFile().isDirectory()) {
+            throw new RuntimeException("$JAVA_HOME/jmods directory does not exist");
+        }
+        Map<String, Resource> resources = new LinkedHashMap<>();
+        for (File jmod : jmods.toFile().listFiles()) {
+            if (!jmod.getAbsolutePath().endsWith(".jmod")) {
+                continue;
+            }
+            try {
+                ZipFile jar = new ZipFile(jmod);
+                var entryIter = jar.entries().asIterator();
+                for (ZipEntry entry; entryIter.hasNext();) {
+                    entry = entryIter.next();
+                    if (entry.getName().startsWith("classes/") && entry.getName().endsWith(".class")) {
+                        String name = entry.getName().substring(8);
+                        InputStream input = jar.getInputStream(entry);
+                        ByteArrayOutputStream output = new ByteArrayOutputStream();
+                        byte[] buf = new byte[1024];
+                        int i;
+                        while ((i = input.read(buf, 0, 1024)) > 0) {
+                            output.write(buf, 0, i);
+                        }
+                        resources.put(name, new Resource("jmod:" + jmod.getAbsolutePath() + ":" + name, output.toByteArray()));
+                    }
+
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("failed to load jmod \"" + jmod.getAbsolutePath() + "\": ", e);
+            }
+        }
+        var stage1 = initStage1(resources);
+        stage1.forEach((javaName, stage1Class) -> {
+            Klass klass = stage1Class.preClass();
+            if (!klass.name.equals(javaName)) {
+                throw new RuntimeException("Inconsistent java path vs package: \"" + klass.name + "\" vs \"" + javaName + "\".");
+            }
+            jreClasses.put(klass.name, klass);
+        });
+        Classpath dummyClasspath;
+        try {
+            dummyClasspath = new Classpath();
+        } catch (IOException e) {
+            throw new RuntimeException("not reached");
+        }
+        jreClasses.forEach((name, klass) -> {
+            stage1.get(name).midClass(dummyClasspath, klass);
+        });
+
+        System.out.println("Loaded " + jreClasses.size() + " JRE classes");
+    }
+
+    public Classpath(String... paths) throws IOException {
+        for (String path : paths) {
+            if (path.endsWith(".jar")) {
+                JarFile jar = new JarFile(new File(path));
+                jar.getResources().forEach((key, value) -> {
+                    resources.put(key, new Resource("jar:" + path + ":" + key, value));
+                });
+            } else if (path.endsWith(".class")) {
+                resources.put(path, new Resource(path, Files.readAllBytes(Paths.get(path))));
+            } else {
+                recurDir(Paths.get(path), Paths.get(path) ,0);
+            }
+        }
+        Map<String, Stage1Class> stage1 = initStage1(resources);
         stage1.forEach((javaName, stage1Class) -> {
             Klass klass = stage1Class.preClass();
             if (!klass.name.equals(javaName)) {
@@ -85,6 +147,10 @@ public class Classpath {
     }
 
     public Klass loadKlass(String name) {
+        Klass jreKlass = jreClasses.get(name);
+        if (jreKlass != null) {
+            return jreKlass;
+        }
         Klass klass = klasses.get(name);
         if (klass != null) {
             return klass;
@@ -99,6 +165,10 @@ public class Classpath {
     }
 
     public Klass lookupKlass(String name) {
+        Klass jreKlass = jreClasses.get(name);
+        if (jreKlass != null) {
+            return jreKlass;
+        }
         return klasses.get(name);
     }
 

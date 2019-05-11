@@ -7,6 +7,7 @@ import com.protryon.jasm.instruction.psuedoinstructions.EnterTry;
 import com.protryon.jasm.instruction.psuedoinstructions.ExitTry;
 import com.protryon.jasm.instruction.psuedoinstructions.Label;
 import com.protryon.jasm.stage1.constant.CClass;
+import com.protryon.jasm.stage1.constant.CMethodHandle;
 import com.protryon.jasm.stage1.constant.CUTF8;
 import com.protryon.jasm.util.TrackingByteArrayInputStream;
 
@@ -21,11 +22,12 @@ public class Stage1Class {
     private ArrayList<AttributeHolder> methods = new ArrayList<>();
     private ArrayList<Attribute> attributes = new ArrayList<>();
     private ArrayList<Integer> implementing = new ArrayList<>();
+    protected CBootstrapMethod[] bootstrapMethods = new CBootstrapMethod[0];
     private int name;
     private int extending;
     private int accessFlags;
 
-    public Stage1Class(int minorVersion, int majorVersion, ArrayList<CConstant> constants, ArrayList<AttributeHolder> fields, ArrayList<AttributeHolder> methods, ArrayList<Attribute> attributes, ArrayList<Integer> implementing, int name, int extending, int accessFlags) {
+    public Stage1Class(int minorVersion, int majorVersion, ArrayList<CConstant> constants, ArrayList<AttributeHolder> fields, ArrayList<AttributeHolder> methods, ArrayList<Attribute> attributes, ArrayList<Integer> implementing, int name, int extending, int accessFlags, CBootstrapMethod[] bootstrapMethods) {
         this.minorVersion = minorVersion;
         this.majorVersion = majorVersion;
         this.constants = constants;
@@ -36,6 +38,7 @@ public class Stage1Class {
         this.name = name;
         this.extending = extending;
         this.accessFlags = accessFlags;
+        this.bootstrapMethods = bootstrapMethods;
     }
 
     public Stage1Class(DataInputStream in, boolean close) throws IOException {
@@ -75,7 +78,20 @@ public class Stage1Class {
         }
         int attributeCount = in.readUnsignedShort();
         for (int i = 0; i < attributeCount; i++) {
-            this.attributes.add(new Attribute(in));
+            Attribute attribute = new Attribute(in);
+            if (CUTF8.assertCUTF8(this.constants.get(attribute.attribute_name_index)).value.equals("BootstrapMethods")) {
+                DataInputStream attributeIn = new DataInputStream(new ByteArrayInputStream(attribute.attribute_info));
+                this.bootstrapMethods = new CBootstrapMethod[attributeIn.readUnsignedShort()];
+                for (int j = 0; j < this.bootstrapMethods.length; ++j) {
+                    int methodHandle = attributeIn.readUnsignedShort();
+                    int[] arguments = new int[attributeIn.readUnsignedShort()];
+                    for (int k = 0; k < arguments.length; ++k) {
+                        arguments[k] = attributeIn.readUnsignedShort();
+                    }
+                    this.bootstrapMethods[j] = new CBootstrapMethod(methodHandle, arguments);
+                }
+            }
+            this.attributes.add(attribute);
         }
         if (close) {
             in.close();
@@ -130,7 +146,7 @@ public class Stage1Class {
 
     private Constant resolveConstant(Classpath classpath, ArrayList<Constant> constants, int x) {
         if (constants.size() <= x || constants.get(x) == null) {
-            Constant c = this.constants.get(x).toConstant(classpath, y -> resolveConstant(classpath, constants, (Integer) y));
+            Constant c = this.constants.get(x).toConstant(classpath, this, y -> resolveConstant(classpath, constants, (Integer) y));
             constants.set(x, c);
             return c;
         } else {

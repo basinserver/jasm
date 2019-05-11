@@ -16,7 +16,7 @@ public final class Local {
         if (this.type == null) {
             this.type = type;
         }
-        this.type.assertType(type);
+        this.type.assertAssignableTo(type);
         return this.type;
     }
 
