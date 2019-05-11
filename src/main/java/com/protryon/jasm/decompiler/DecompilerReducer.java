@@ -28,13 +28,13 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
     private final Method method;
     private final Consumer<Statement> emitter;
     private final Supplier<Integer> temporaryVariableIndexer;
-    private final HashMap<String, Expression> specialResolutions = new HashMap<>();
 
+    /*
     private StackEntry<Expression> tempify(StackEntry<Expression> value) {
         String tempName = "t" + this.temporaryVariableIndexer.get();
         emitter.accept(new ExpressionStmt(new VariableDeclarationExpr(new VariableDeclarator(Decompiler.convertType(value.type), tempName, value.value))));
         return entry(value.type, new NameExpr(tempName));
-    }
+    }*/
 
     public DecompilerReducer(Method method, Consumer<Statement> emitter, Supplier<Integer> temporaryVariableIndexer) {
         this.method = method;
@@ -364,38 +364,30 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public Pair<StackEntry<Expression>, StackEntry<Expression>> reduceDup(Dup instruction, StackEntry<Expression> value) {
-        // TODO: this is unsafe we must force inline this
-        StackEntry<Expression> temp = tempify(value);
-        return Pair.of(temp, temp);
+        return Pair.of(value, value);
     }
 
     @Override
     public Tuple3<StackEntry<Expression>, StackEntry<Expression>, StackEntry<Expression>> reduceDup_x1(Dup_x1 instruction, StackEntry<Expression> value2, StackEntry<Expression> value1) {
-        StackEntry<Expression> temp = tempify(value1);
-        return Tuple3.of(temp, value2, temp);
+        return Tuple3.of(value1, value2, value1);
     }
 
     @Override
     public ImmutableList<StackEntry<Expression>> reduceDup_x2(Dup_x2 instruction, StackEntry<Expression> value1, StackEntry<Expression> value2, Maybe<StackEntry<Expression>> value3) {
         value1.type.assertComputationType(1);
         if (value2.type.computationType == 1) {
-            StackEntry<Expression> temp = tempify(value1);
-            return ImmutableList.of(temp, value3.fromJust(), value2, temp);
+            return ImmutableList.of(value1, value3.fromJust(), value2, value1);
         } else {
-            StackEntry<Expression> temp = tempify(value1);
-            return ImmutableList.of(temp, value2, temp);
+            return ImmutableList.of(value1, value2, value1);
         }
     }
 
     @Override
     public ImmutableList<StackEntry<Expression>> reduceDup2(Dup2 instruction, StackEntry<Expression> value1, Maybe<StackEntry<Expression>> value2) {
         if (value1.type.computationType == 1) {
-            StackEntry<Expression> temp1 = tempify(value1);
-            StackEntry<Expression> temp2 = tempify(value2.fromJust());
-            return ImmutableList.of(temp1, temp2, temp1, temp2);
+            return ImmutableList.of(value1, value2.fromJust(), value1, value2.fromJust());
         } else {
-            StackEntry<Expression> temp = tempify(value1);
-            return ImmutableList.of(temp, temp);
+            return ImmutableList.of(value1, value1);
         }
     }
 
@@ -1321,7 +1313,16 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public Maybe<StackEntry<Expression>> reduceInvokespecial(Invokespecial instruction, StackEntry<Expression> objectref, List<StackEntry<Expression>> arguments) {
-        return instanceInvokation(objectref, arguments, ((Constant<Method>) instruction.indexbyte).value);
+        Method method = ((Constant<Method>) instruction.indexbyte).value;
+        if (method.descriptor.returnType != JType.voidT) {
+            throw new RuntimeException("unexpected return type from invokespecial: " + method.descriptor.toString());
+        }
+        if (objectref.value instanceof ObjectCreationExpr) {
+            ((ObjectCreationExpr) objectref.value).setArguments(new NodeList<>(arguments.stream().map(x -> x.value).collect(Collectors.toList())));
+            return Maybe.empty();
+        } else {
+            throw new RuntimeException("unexpected object ref type in invokespecial: " + objectref.value.getClass().getSimpleName());
+        }
     }
 
     @Override
