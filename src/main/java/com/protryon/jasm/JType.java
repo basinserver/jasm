@@ -104,7 +104,10 @@ public class JType {
     }
 
     public boolean assignableTo(Object o) {
-        if (o == null && this instanceof JTypeInstance) {
+        if (this == JType.nullT && (o instanceof JTypeInstance || o instanceof JTypeArray)) {
+            return true;
+        }
+        if (!(o instanceof JTypeInstance) && !(this instanceof JTypeInstance) && !(o instanceof JTypeArray) && !(this instanceof JTypeArray)) {
             return true;
         }
         if (!(o instanceof JTypeInstance) || !(this instanceof JTypeInstance)) {

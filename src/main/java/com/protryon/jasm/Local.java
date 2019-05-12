@@ -12,20 +12,10 @@ public final class Local {
         this.index = index;
     }
 
-    public JType setOrAssertType(JType type) {
-        if (this.type == null) {
+    public JType resetType(JType type) {
+        if (this.type == null || !type.assignableTo(this.type)) {
             this.type = type;
         }
-        this.type.assertAssignableTo(type);
-        return this.type;
-    }
-
-    public JType setOrAssertTypes(JType... types) {
-        if (this.type == null) {
-            this.type = types[0];
-            return this.type;
-        }
-        this.type.assertTypes(types);
         return this.type;
     }
 

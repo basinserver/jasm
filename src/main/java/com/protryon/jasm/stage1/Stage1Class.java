@@ -10,6 +10,7 @@ import com.protryon.jasm.stage1.constant.CClass;
 import com.protryon.jasm.stage1.constant.CMethodHandle;
 import com.protryon.jasm.stage1.constant.CUTF8;
 import com.protryon.jasm.util.TrackingByteArrayInputStream;
+import com.shapesecurity.functional.data.ImmutableList;
 
 import java.io.*;
 import java.util.*;
@@ -26,8 +27,9 @@ public class Stage1Class {
     private int name;
     private int extending;
     private int accessFlags;
+    public final boolean isLibrary;
 
-    public Stage1Class(int minorVersion, int majorVersion, ArrayList<CConstant> constants, ArrayList<AttributeHolder> fields, ArrayList<AttributeHolder> methods, ArrayList<Attribute> attributes, ArrayList<Integer> implementing, int name, int extending, int accessFlags, CBootstrapMethod[] bootstrapMethods) {
+    public Stage1Class(int minorVersion, int majorVersion, ArrayList<CConstant> constants, ArrayList<AttributeHolder> fields, ArrayList<AttributeHolder> methods, ArrayList<Attribute> attributes, ArrayList<Integer> implementing, int name, int extending, int accessFlags, CBootstrapMethod[] bootstrapMethods, boolean isLibrary) {
         this.minorVersion = minorVersion;
         this.majorVersion = majorVersion;
         this.constants = constants;
@@ -39,9 +41,10 @@ public class Stage1Class {
         this.extending = extending;
         this.accessFlags = accessFlags;
         this.bootstrapMethods = bootstrapMethods;
+        this.isLibrary = isLibrary;
     }
 
-    public Stage1Class(DataInputStream in, boolean close) throws IOException {
+    public Stage1Class(DataInputStream in, boolean isLibrary) throws IOException {
         if (in.read() != 0x000000CA || in.read() != 0x000000FE || in.read() != 0x000000BA || in.read() != 0x000000BE) {
             throw new IOException("Not a Class File! Magic is not 0xCAFEBABE.");
         }
@@ -93,9 +96,7 @@ public class Stage1Class {
             }
             this.attributes.add(attribute);
         }
-        if (close) {
-            in.close();
-        }
+        this.isLibrary = isLibrary;
     }
 
     public void write(DataOutputStream out) throws IOException {
@@ -220,9 +221,9 @@ public class Stage1Class {
                         instructionPCToIndex.put(pc, newMethod.code.size());
                         newMethod.code.add(ins);
                     }
-                    HashMap<Integer, Instruction> instructionsToAdd = new HashMap<>();
+                    HashMap<Integer, List<Instruction>> instructionsToAdd = new HashMap<>();
                     labelsToAdd.forEach((pc, label) -> {
-                        instructionsToAdd.put(instructionPCToIndex.get(pc), label);
+                        instructionsToAdd.put(instructionPCToIndex.get(pc), ImmutableList.of((Instruction) label).toLinkedList());
                     });
                     //TODO: practically wont happen but possible collision ^^
                     int exceptionTableCount = in.readUnsignedShort();
@@ -236,25 +237,27 @@ public class Stage1Class {
                         int handlerIndex = instructionPCToIndex.get(handler);
                         JType jtype;
                         if (type == 0) {
-                            jtype = JType.voidT;
+                            jtype = JType.instance(classpath.loadKlass("java/lang/Exception"));
                         } else {
-                            jtype = JType.instance((Klass) constants.get(type).value);
+                            jtype = (JType) constants.get(type).value;
                         }
                         Label label = newMethod.makeCatch("_catch_" + startIndex + "_" + endIndex + "_" + jtype.javaName);
                         EnterTry enter = new EnterTry(label, jtype);
-                        ExitTry exit = new ExitTry();
-                        instructionsToAdd.put(startIndex, enter);
-                        instructionsToAdd.put(handlerIndex, label);
+                        ExitTry exit = new ExitTry(label);
+                        instructionsToAdd.computeIfAbsent(startIndex, x -> new LinkedList<>()).add(enter);
+                        instructionsToAdd.computeIfAbsent(handlerIndex, x -> new LinkedList<>()).add(label);
                         if (endIndex == -1) {
                             newMethod.code.add(exit);
+                        } else {
+                            instructionsToAdd.computeIfAbsent(endIndex, x -> new LinkedList<>()).add(exit);
                         }
                     }
                     ListIterator<Instruction> iterator = newMethod.code.listIterator();
                     int unmodifiedIndex = 0;
                     while (iterator.hasNext()) {
-                        Instruction maybeAdd = instructionsToAdd.get(unmodifiedIndex++);
+                        List<Instruction> maybeAdd = instructionsToAdd.get(unmodifiedIndex++);
                         if (maybeAdd != null) {
-                            iterator.add(maybeAdd);
+                            maybeAdd.forEach(iterator::add);
                         }
                         iterator.next();
                     }

@@ -127,13 +127,19 @@ public abstract class CConstant<T> {
             case 6:
                 return new Constant<>(((CDouble) this).value);
             case 7:
-                return new Constant<>(classpath.loadKlass((String) lookup.apply(((CClass) this).value).value));
+                String descriptor = (String) lookup.apply(((CClass) this).value).value;
+                if (descriptor.startsWith("[")) {
+                    return new Constant<>(JType.fromDescriptor(classpath, descriptor));
+                } else {
+                    return new Constant<>(JType.instance(classpath.loadKlass(descriptor)));
+                }
             case 8:
                 return new Constant<>((String) lookup.apply(((CString) this).value).value);
             case 9:
                 CFieldRef fieldRef = (CFieldRef) this;
-                Klass fieldKlass = (Klass) lookup.apply(fieldRef.value.left).value;
+                JType fieldKlassAsType = (JType) lookup.apply(fieldRef.value.left).value;
                 nameAndType = (NameAndType) lookup.apply(fieldRef.value.right).value;
+                Klass fieldKlass = fieldKlassAsType instanceof JType.JTypeInstance ? fieldKlassAsType.referenceOf() : classpath.loadKlass("java/lang/Object");
                 Field field = findField(fieldKlass, nameAndType.name, nameAndType.type.left().fromJust());
                 if (field == null) {
                     throw new RuntimeException("Field not found: " + nameAndType.toString());
@@ -144,8 +150,9 @@ public abstract class CConstant<T> {
                 return new Constant<>(field);
             case 10: {
                 CMethodRef methodRef = (CMethodRef) this;
-                Klass methodKlass = (Klass) lookup.apply(methodRef.value.left).value;
+                JType methodKlassAsType = (JType) lookup.apply(methodRef.value.left).value;
                 nameAndType = (NameAndType) lookup.apply(methodRef.value.right).value;
+                Klass methodKlass = methodKlassAsType instanceof JType.JTypeInstance ? methodKlassAsType.referenceOf() : classpath.loadKlass("java/lang/Object");
                 Method method = findMethod(methodKlass, nameAndType.name, nameAndType.type.right().fromJust());
                 if (method == null) {
                     throw new RuntimeException("Method descriptor not found: " + nameAndType.toString());
@@ -154,8 +161,9 @@ public abstract class CConstant<T> {
             }
             case 11: {
                 CInterfaceMethodRef methodRef = (CInterfaceMethodRef) this;
-                Klass methodKlass = (Klass) lookup.apply(methodRef.value.left).value;
+                JType methodKlassAsType = (JType) lookup.apply(methodRef.value.left).value;
                 nameAndType = (NameAndType) lookup.apply(methodRef.value.right).value;
+                Klass methodKlass = methodKlassAsType instanceof JType.JTypeInstance ? methodKlassAsType.referenceOf() : classpath.loadKlass("java/lang/Object");
                 Method method = findMethod(methodKlass, nameAndType.name, nameAndType.type.right().fromJust());
                 if (method == null) {
                     throw new RuntimeException("Interface method descriptor not found: " + nameAndType.toString());

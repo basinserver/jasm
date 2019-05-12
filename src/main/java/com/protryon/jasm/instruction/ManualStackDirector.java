@@ -120,8 +120,8 @@ public final class ManualStackDirector {
                 T objectref = stack.maybeHead().fromJust();
                 stack = stack.maybeTail().fromJust();
                 T pushed = reducer.reduceAthrow((Athrow) instruction, objectref);
-                throw new UnsupportedOperationException("TODO: find catch block for exception type then modify stack at that point");
-                // break;
+                stack = stack.cons(pushed);
+                break;
             }
             case 197: { // multianewarray
                 Multianewarray multianewarray = (Multianewarray) instruction;

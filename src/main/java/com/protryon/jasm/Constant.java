@@ -9,12 +9,14 @@ public final class Constant<T> {
     }
 
     public String toString() {
-        if (value instanceof Klass) {
-            return ((Klass) value).name;
+        if (value instanceof JType) {
+            return value.toString();
         } else if (value instanceof Method) {
             return ((Method) value).descriptor.niceString(((Method) value).name);
         } else if (value instanceof Field) {
             return ((Field) value).name + " " + ((Field) value).type.niceName;
+        } else if (value instanceof Local) {
+            return "v" + ((Local) value).index;
         }
         return value.toString();
     }

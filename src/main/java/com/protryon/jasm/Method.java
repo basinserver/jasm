@@ -29,6 +29,8 @@ public class Method {
     // set for created methods in things like stdlib or unincluded libs
     public boolean isDummy = false;
 
+    public int tempVariableCounter = 0;
+
     public ArrayList<Local> locals = new ArrayList<>();
     public LinkedList<Instruction> code = new LinkedList<>();
     public LinkedHashMap<String, Label> labels = new LinkedHashMap<>();

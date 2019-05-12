@@ -30,8 +30,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestJASM {
 
-    private int tempCounter = 0;
-
     @Test
     public void testJASM() throws IOException {
 
@@ -41,22 +39,26 @@ public class TestJASM {
 
         // i will probably write better tests for this in the future......
 
-        Classpath classpath = new Classpath("/p/git/Burger/1.14.jar");
+        Classpath classpath = new Classpath(new String[] { "/home/p/.minecraft/libraries" }, new String[] { "/p/git/Burger/1.14.jar" });
 
         File outDir = new File("./out");
         outDir.mkdirs();
+        int completed = 0, total = 0;
 
         for (Klass klass : classpath.getKlasses().values()) {
+            ++total;
             try {
                 CompilationUnit decompiled = Decompiler.decompileClass(classpath, klass);
                 Path javaPath = outDir.toPath().resolve(klass.name + ".java");
                 javaPath.getParent().toFile().mkdirs();
                 Files.write(javaPath, decompiled.toString().getBytes(Charsets.UTF_8));
+                ++completed;
             } catch (Exception e) {
                 System.err.println("failed to decompile " + klass.name + ":");
                 e.printStackTrace();
             }
         }
+        System.out.println("completed " + completed + " / " + total + " classes");
         /*
         Klass bmm = classpath.lookupKlass("bmm");
 

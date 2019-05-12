@@ -2,7 +2,6 @@ package com.protryon.jasm.decompiler;
 
 import com.github.javaparser.ast.ArrayCreationLevel;
 import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
@@ -17,10 +16,8 @@ import com.shapesecurity.functional.Tuple3;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
@@ -28,22 +25,11 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
     private final Classpath classpath;
     private final Method method;
     private final Consumer<Statement> emitter;
-    private final Supplier<Integer> temporaryVariableIndexer;
 
-    private static final JType[] psuedoInts = new JType[] {JType.intT, JType.shortT, JType.charT, JType.byteT, JType.booleanT};
-
-    /*
-    private StackEntry<Expression> tempify(StackEntry<Expression> value) {
-        String tempName = "t" + this.temporaryVariableIndexer.get();
-        emitter.accept(new ExpressionStmt(new VariableDeclarationExpr(new VariableDeclarator(Decompiler.convertType(value.type), tempName, value.value))));
-        return entry(value.type, new NameExpr(tempName));
-    }*/
-
-    public DecompilerReducer(Classpath classpath, Method method, Consumer<Statement> emitter, Supplier<Integer> temporaryVariableIndexer) {
+    public DecompilerReducer(Classpath classpath, Method method, Consumer<Statement> emitter) {
         this.classpath = classpath;
         this.method = method;
         this.emitter = emitter;
-        this.temporaryVariableIndexer = temporaryVariableIndexer;
     }
 
     private static StackEntry<Expression> entry(JType type, Expression expr) {
@@ -52,14 +38,14 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceAaload(Aaload instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index) {
-        index.type.assertType(JType.intT);
+        index.type.assertAssignableTo(JType.intT);
         return entry(arrayref.type.elementType(), new ArrayAccessExpr(arrayref.value, index.value));
     }
 
     @Override
     public void reduceAastore(Aastore instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index, StackEntry<Expression> value) {
         arrayref.type.elementType();
-        index.type.assertType(JType.intT);
+        index.type.assertAssignableTo(JType.intT);
         value.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new ArrayAccessExpr(arrayref.value, index.value), value.value, AssignExpr.Operator.ASSIGN)));
     }
@@ -79,7 +65,7 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
         if (method.isStatic) {
             return entry(method.getOrMakeLocal(0).type, new NameExpr("v0"));
         } else {
-            return entry(method.getOrMakeLocal(0).setOrAssertType(JType.instance(method.parent)), new ThisExpr());
+            return entry(method.getOrMakeLocal(0).resetType(JType.instance(method.parent)), new ThisExpr());
         }
     }
 
@@ -100,9 +86,9 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceAnewarray(Anewarray instruction, StackEntry<Expression> count) {
-        Klass klass = ((Constant<Klass>) instruction.indexbyte).value;
-        count.type.assertType(JType.intT);
-        return entry(JType.array(JType.instance(klass)), new ArrayCreationExpr(new ClassOrInterfaceType(klass.name), new NodeList<>(new ArrayCreationLevel(count.value)), null));
+        JType type = ((Constant<JType>) instruction.indexbyte).value;
+        count.type.assertAssignableTo(JType.intT);
+        return entry(JType.array(type), new ArrayCreationExpr(Decompiler.convertType(type), new NodeList<>(new ArrayCreationLevel(count.value)), null));
     }
 
     @Override
@@ -119,35 +105,35 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public void reduceAstore(Astore instruction, StackEntry<Expression> objectref) {
-        instruction.index.setOrAssertType(objectref.type);
+        instruction.index.resetType(objectref.type);
         objectref.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index.index), objectref.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceAstore_0(Astore_0 instruction, StackEntry<Expression> objectref) {
-        method.getOrMakeLocal(0).setOrAssertType(objectref.type);
+        method.getOrMakeLocal(0).resetType(objectref.type);
         objectref.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v0"), objectref.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceAstore_1(Astore_1 instruction, StackEntry<Expression> objectref) {
-        method.getOrMakeLocal(1).setOrAssertType(objectref.type);
+        method.getOrMakeLocal(1).resetType(objectref.type);
         objectref.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v1"), objectref.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceAstore_2(Astore_2 instruction, StackEntry<Expression> objectref) {
-        method.getOrMakeLocal(2).setOrAssertType(objectref.type);
+        method.getOrMakeLocal(2).resetType(objectref.type);
         objectref.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v2"), objectref.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceAstore_3(Astore_3 instruction, StackEntry<Expression> objectref) {
-        method.getOrMakeLocal(3).setOrAssertType(objectref.type);
+        method.getOrMakeLocal(3).resetType(objectref.type);
         objectref.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v3"), objectref.value, AssignExpr.Operator.ASSIGN)));
     }
@@ -156,19 +142,19 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
     public StackEntry<Expression> reduceAthrow(Athrow instruction, StackEntry<Expression> objectref) {
         objectref.type.assertReference();
         emitter.accept(new ThrowStmt(objectref.value));
-        return objectref;
+        return entry(objectref.type, new NameExpr("t" + method.tempVariableCounter++));
     }
 
     @Override
     public StackEntry<Expression> reduceBaload(Baload instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index) {
-        index.type.assertType(JType.intT);
+        index.type.assertAssignableTo(JType.intT);
         return entry(arrayref.type.elementType(), new ArrayAccessExpr(arrayref.value, index.value));
     }
 
     @Override
     public void reduceBastore(Bastore instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index, StackEntry<Expression> value) {
         arrayref.type.elementType();
-        index.type.assertType(JType.intT);
+        index.type.assertAssignableTo(JType.intT);
         value.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new ArrayAccessExpr(arrayref.value, index.value), value.value, AssignExpr.Operator.ASSIGN)));
     }
@@ -180,15 +166,15 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceCaload(Caload instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index) {
-        arrayref.type.elementType().assertType(JType.charT);
-        index.type.assertType(JType.intT);
+        arrayref.type.elementType().assertAssignableTo(JType.charT);
+        index.type.assertAssignableTo(JType.intT);
         return entry(JType.charT, new ArrayAccessExpr(arrayref.value, index.value));
     }
 
     @Override
     public void reduceCastore(Castore instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index, StackEntry<Expression> value) {
-        arrayref.type.elementType().assertType(JType.charT);
-        index.type.assertType(JType.intT);
+        arrayref.type.elementType().assertAssignableTo(JType.charT);
+        index.type.assertAssignableTo(JType.intT);
         value.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new ArrayAccessExpr(arrayref.value, index.value), value.value, AssignExpr.Operator.ASSIGN)));
     }
@@ -196,46 +182,46 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
     @Override
     public StackEntry<Expression> reduceCheckcast(Checkcast instruction, StackEntry<Expression> objectref) {
         objectref.type.assertReference();
-        Klass klass = ((Constant<Klass>) instruction.indexbyte).value;
-        return entry(JType.instance(klass), new CastExpr(new ClassOrInterfaceType(klass.name), objectref.value));
+        JType type = ((Constant<JType>) instruction.indexbyte).value;
+        return entry(type, new CastExpr(Decompiler.convertType(type), objectref.value));
     }
 
     @Override
     public StackEntry<Expression> reduceD2f(D2f instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.doubleT);
+        value.type.assertAssignableTo(JType.doubleT);
         return entry(JType.floatT, new CastExpr(PrimitiveType.floatType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceD2i(D2i instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.doubleT);
+        value.type.assertAssignableTo(JType.doubleT);
         return entry(JType.floatT, new CastExpr(PrimitiveType.intType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceD2l(D2l instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.doubleT);
+        value.type.assertAssignableTo(JType.doubleT);
         return entry(JType.floatT, new CastExpr(PrimitiveType.longType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceDadd(Dadd instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.doubleT);
-        value2.type.assertType(JType.doubleT);
+        value1.type.assertAssignableTo(JType.doubleT);
+        value2.type.assertAssignableTo(JType.doubleT);
         return entry(JType.doubleT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.PLUS));
     }
 
     @Override
     public StackEntry<Expression> reduceDaload(Daload instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index) {
-        arrayref.type.elementType().assertType(JType.doubleT);
-        index.type.assertType(JType.intT);
+        arrayref.type.elementType().assertAssignableTo(JType.doubleT);
+        index.type.assertAssignableTo(JType.intT);
         return entry(JType.doubleT, new ArrayAccessExpr(arrayref.value, index.value));
     }
 
     @Override
     public void reduceDastore(Dastore instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index, StackEntry<Expression> value) {
-        arrayref.type.elementType().assertType(JType.doubleT);
-        index.type.assertType(JType.intT);
+        arrayref.type.elementType().assertAssignableTo(JType.doubleT);
+        index.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new ArrayAccessExpr(arrayref.value, index.value), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
@@ -267,31 +253,31 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceDload(Dload instruction) {
-        instruction.index.setOrAssertType(JType.doubleT);
+        instruction.index.resetType(JType.doubleT);
         return entry(JType.doubleT, new NameExpr("v" + instruction.index.index));
     }
 
     @Override
     public StackEntry<Expression> reduceDload_0(Dload_0 instruction) {
-        method.getOrMakeLocal(0).setOrAssertType(JType.doubleT);
+        method.getOrMakeLocal(0).resetType(JType.doubleT);
         return entry(JType.doubleT, new NameExpr("v0"));
     }
 
     @Override
     public StackEntry<Expression> reduceDload_1(Dload_1 instruction) {
-        method.getOrMakeLocal(1).setOrAssertType(JType.doubleT);
+        method.getOrMakeLocal(1).resetType(JType.doubleT);
         return entry(JType.doubleT, new NameExpr("v1"));
     }
 
     @Override
     public StackEntry<Expression> reduceDload_2(Dload_2 instruction) {
-        method.getOrMakeLocal(2).setOrAssertType(JType.doubleT);
+        method.getOrMakeLocal(2).resetType(JType.doubleT);
         return entry(JType.doubleT, new NameExpr("v2"));
     }
 
     @Override
     public StackEntry<Expression> reduceDload_3(Dload_3 instruction) {
-        method.getOrMakeLocal(3).setOrAssertType(JType.doubleT);
+        method.getOrMakeLocal(3).resetType(JType.doubleT);
         return entry(JType.doubleT, new NameExpr("v3"));
     }
 
@@ -317,38 +303,38 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public void reduceDstore(Dstore instruction, StackEntry<Expression> value) {
-        instruction.index.setOrAssertType(JType.doubleT);
+        instruction.index.resetType(JType.doubleT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index.index), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceDstore_0(Dstore_0 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(0).setOrAssertType(JType.doubleT);
+        method.getOrMakeLocal(0).resetType(JType.doubleT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v0"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceDstore_1(Dstore_1 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(1).setOrAssertType(JType.doubleT);
+        method.getOrMakeLocal(1).resetType(JType.doubleT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v1"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceDstore_2(Dstore_2 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(2).setOrAssertType(JType.doubleT);
+        method.getOrMakeLocal(2).resetType(JType.doubleT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v2"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceDstore_3(Dstore_3 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(3).setOrAssertType(JType.doubleT);
+        method.getOrMakeLocal(3).resetType(JType.doubleT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v3"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public StackEntry<Expression> reduceDsub(Dsub instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.doubleT);
-        value2.type.assertType(JType.doubleT);
+        value1.type.assertAssignableTo(JType.doubleT);
+        value2.type.assertAssignableTo(JType.doubleT);
         return entry(JType.doubleT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.MINUS));
     }
 
@@ -393,56 +379,56 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceF2d(F2d instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.floatT);
+        value.type.assertAssignableTo(JType.floatT);
         return entry(JType.doubleT, new CastExpr(PrimitiveType.doubleType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceF2i(F2i instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.floatT);
+        value.type.assertAssignableTo(JType.floatT);
         return entry(JType.intT, new CastExpr(PrimitiveType.intType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceF2l(F2l instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.floatT);
+        value.type.assertAssignableTo(JType.floatT);
         return entry(JType.longT, new CastExpr(PrimitiveType.longType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceFadd(Fadd instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.floatT);
-        value2.type.assertType(JType.floatT);
+        value1.type.assertAssignableTo(JType.floatT);
+        value2.type.assertAssignableTo(JType.floatT);
         return entry(JType.floatT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.PLUS));
     }
 
     @Override
     public StackEntry<Expression> reduceFaload(Faload instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index) {
-        arrayref.type.elementType().assertType(JType.floatT);
-        index.type.assertType(JType.intT);
+        arrayref.type.elementType().assertAssignableTo(JType.floatT);
+        index.type.assertAssignableTo(JType.intT);
         return entry(JType.floatT, new ArrayAccessExpr(arrayref.value, index.value));
     }
 
     @Override
     public void reduceFastore(Fastore instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index, StackEntry<Expression> value) {
-        arrayref.type.elementType().assertType(JType.floatT);
-        index.type.assertType(JType.intT);
-        value.type.assertType(JType.floatT);
+        arrayref.type.elementType().assertAssignableTo(JType.floatT);
+        index.type.assertAssignableTo(JType.intT);
+        value.type.assertAssignableTo(JType.floatT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new ArrayAccessExpr(arrayref.value, index.value), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public StackEntry<Expression> reduceFcmpg(Fcmpg instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.floatT);
-        value2.type.assertType(JType.floatT);
+        value1.type.assertAssignableTo(JType.floatT);
+        value2.type.assertAssignableTo(JType.floatT);
         return entry(JType.intT, new MethodCallExpr(new NameExpr("Float"), "compareTo", new NodeList<>(value1.value, value2.value)));
     }
 
     @Override
     public StackEntry<Expression> reduceFcmpl(Fcmpl instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
         // NaN is negative infinity not positive infinity
-        value2.type.assertType(JType.floatT);
-        value1.type.assertType(JType.floatT);
+        value2.type.assertAssignableTo(JType.floatT);
+        value1.type.assertAssignableTo(JType.floatT);
         return entry(JType.intT, new UnaryExpr(new MethodCallExpr(new NameExpr("Float"), "compareTo", new NodeList<>(value2.value, value1.value)), UnaryExpr.Operator.MINUS));
     }
 
@@ -463,106 +449,106 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceFdiv(Fdiv instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.floatT);
-        value2.type.assertType(JType.floatT);
+        value1.type.assertAssignableTo(JType.floatT);
+        value2.type.assertAssignableTo(JType.floatT);
         return entry(JType.floatT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.DIVIDE));
     }
 
     @Override
     public StackEntry<Expression> reduceFload(Fload instruction) {
-        instruction.index.setOrAssertType(JType.floatT);
+        instruction.index.resetType(JType.floatT);
         return entry(JType.floatT, new NameExpr("v" + instruction.index.index));
     }
 
     @Override
     public StackEntry<Expression> reduceFload_0(Fload_0 instruction) {
-        method.getOrMakeLocal(0).setOrAssertType(JType.floatT);
+        method.getOrMakeLocal(0).resetType(JType.floatT);
         return entry(JType.floatT, new NameExpr("v0"));
     }
 
     @Override
     public StackEntry<Expression> reduceFload_1(Fload_1 instruction) {
-        method.getOrMakeLocal(1).setOrAssertType(JType.floatT);
+        method.getOrMakeLocal(1).resetType(JType.floatT);
         return entry(JType.floatT, new NameExpr("v1"));
     }
 
     @Override
     public StackEntry<Expression> reduceFload_2(Fload_2 instruction) {
-        method.getOrMakeLocal(2).setOrAssertType(JType.floatT);
+        method.getOrMakeLocal(2).resetType(JType.floatT);
         return entry(JType.floatT, new NameExpr("v2"));
     }
 
     @Override
     public StackEntry<Expression> reduceFload_3(Fload_3 instruction) {
-        method.getOrMakeLocal(3).setOrAssertType(JType.floatT);
+        method.getOrMakeLocal(3).resetType(JType.floatT);
         return entry(JType.floatT, new NameExpr("v3"));
     }
 
     @Override
     public StackEntry<Expression> reduceFmul(Fmul instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.floatT);
-        value2.type.assertType(JType.floatT);
+        value1.type.assertAssignableTo(JType.floatT);
+        value2.type.assertAssignableTo(JType.floatT);
         return entry(JType.floatT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.MULTIPLY));
     }
 
     @Override
     public StackEntry<Expression> reduceFneg(Fneg instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.floatT);
+        value.type.assertAssignableTo(JType.floatT);
         return entry(JType.floatT, new UnaryExpr(value.value, UnaryExpr.Operator.MINUS));
     }
 
     @Override
     public StackEntry<Expression> reduceFrem(Frem instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.floatT);
-        value2.type.assertType(JType.floatT);
+        value1.type.assertAssignableTo(JType.floatT);
+        value2.type.assertAssignableTo(JType.floatT);
         return entry(JType.floatT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.REMAINDER));
     }
 
     @Override
     public void reduceFreturn(Freturn instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.floatT);
+        value.type.assertAssignableTo(JType.floatT);
         emitter.accept(new ReturnStmt(value.value));
     }
 
     @Override
     public void reduceFstore(Fstore instruction, StackEntry<Expression> value) {
-        instruction.index.setOrAssertType(JType.floatT);
-        value.type.assertType(JType.floatT);
+        instruction.index.resetType(JType.floatT);
+        value.type.assertAssignableTo(JType.floatT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index.index), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceFstore_0(Fstore_0 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(0).setOrAssertType(JType.floatT);
-        value.type.assertType(JType.floatT);
+        method.getOrMakeLocal(0).resetType(JType.floatT);
+        value.type.assertAssignableTo(JType.floatT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v0"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceFstore_1(Fstore_1 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(1).setOrAssertType(JType.floatT);
-        value.type.assertType(JType.floatT);
+        method.getOrMakeLocal(1).resetType(JType.floatT);
+        value.type.assertAssignableTo(JType.floatT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v1"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceFstore_2(Fstore_2 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(2).setOrAssertType(JType.floatT);
-        value.type.assertType(JType.floatT);
+        method.getOrMakeLocal(2).resetType(JType.floatT);
+        value.type.assertAssignableTo(JType.floatT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v2"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceFstore_3(Fstore_3 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(3).setOrAssertType(JType.floatT);
-        value.type.assertType(JType.floatT);
+        method.getOrMakeLocal(3).resetType(JType.floatT);
+        value.type.assertAssignableTo(JType.floatT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v3"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public StackEntry<Expression> reduceFsub(Fsub instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.floatT);
-        value2.type.assertType(JType.floatT);
+        value1.type.assertAssignableTo(JType.floatT);
+        value2.type.assertAssignableTo(JType.floatT);
         return entry(JType.floatT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.MINUS));
     }
 
@@ -590,66 +576,66 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceI2b(I2b instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         return entry(JType.byteT, new CastExpr(PrimitiveType.byteType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceI2c(I2c instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         return entry(JType.charT, new CastExpr(PrimitiveType.charType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceI2d(I2d instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         return entry(JType.doubleT, new CastExpr(PrimitiveType.doubleType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceI2f(I2f instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         return entry(JType.floatT, new CastExpr(PrimitiveType.floatType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceI2l(I2l instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         return entry(JType.longT, new CastExpr(PrimitiveType.longType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceI2s(I2s instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         return entry(JType.shortT, new CastExpr(PrimitiveType.shortType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceIadd(Iadd instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertTypes(psuedoInts);
-        value2.type.assertTypes(psuedoInts);
+        value1.type.assertAssignableTo(JType.intT);
+        value2.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.MINUS));
     }
 
     @Override
     public StackEntry<Expression> reduceIaload(Iaload instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index) {
-        arrayref.type.elementType().assertType(JType.intT);
-        index.type.assertType(JType.intT);
+        arrayref.type.elementType().assertAssignableTo(JType.intT);
+        index.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new ArrayAccessExpr(arrayref.value, index.value));
     }
 
     @Override
     public StackEntry<Expression> reduceIand(Iand instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertTypes(psuedoInts);
-        value2.type.assertTypes(psuedoInts);
+        value1.type.assertAssignableTo(JType.intT);
+        value2.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.BINARY_AND));
     }
 
     @Override
     public void reduceIastore(Iastore instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index, StackEntry<Expression> value) {
-        arrayref.type.elementType().assertType(JType.intT);
-        index.type.assertType(JType.intT);
-        value.type.assertType(JType.intT);
+        arrayref.type.elementType().assertAssignableTo(JType.intT);
+        index.type.assertAssignableTo(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new ArrayAccessExpr(arrayref.value, index.value), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
@@ -690,8 +676,8 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceIdiv(Idiv instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertTypes(psuedoInts);
-        value2.type.assertTypes(psuedoInts);
+        value1.type.assertAssignableTo(JType.intT);
+        value2.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.DIVIDE));
     }
 
@@ -783,139 +769,139 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceIload(Iload instruction) {
-        instruction.index.setOrAssertTypes(psuedoInts);
+        instruction.index.resetType(JType.intT);
         return entry(JType.intT, new NameExpr("v" + instruction.index.index));
     }
 
     @Override
     public StackEntry<Expression> reduceIload_0(Iload_0 instruction) {
-        method.getOrMakeLocal(0).setOrAssertTypes(psuedoInts);
+        method.getOrMakeLocal(0).resetType(JType.intT);
         return entry(JType.intT, new NameExpr("v0"));
     }
 
     @Override
     public StackEntry<Expression> reduceIload_1(Iload_1 instruction) {
-        method.getOrMakeLocal(1).setOrAssertTypes(psuedoInts);
+        method.getOrMakeLocal(1).resetType(JType.intT);
         return entry(JType.intT, new NameExpr("v1"));
     }
 
     @Override
     public StackEntry<Expression> reduceIload_2(Iload_2 instruction) {
-        method.getOrMakeLocal(2).setOrAssertTypes(psuedoInts);
+        method.getOrMakeLocal(2).resetType(JType.intT);
         return entry(JType.intT, new NameExpr("v2"));
     }
 
     @Override
     public StackEntry<Expression> reduceIload_3(Iload_3 instruction) {
-        method.getOrMakeLocal(3).setOrAssertTypes(psuedoInts);
+        method.getOrMakeLocal(3).resetType(JType.intT);
         return entry(JType.intT, new NameExpr("v3"));
     }
 
     @Override
     public StackEntry<Expression> reduceImul(Imul instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertTypes(psuedoInts);
-        value2.type.assertTypes(psuedoInts);
+        value1.type.assertAssignableTo(JType.intT);
+        value2.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.MULTIPLY));
     }
 
     @Override
     public StackEntry<Expression> reduceIneg(Ineg instruction, StackEntry<Expression> value) {
-        value.type.assertTypes(psuedoInts);
+        value.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new UnaryExpr(value.value, UnaryExpr.Operator.MINUS));
     }
 
     @Override
     public StackEntry<Expression> reduceInstanceof(Instanceof instruction, StackEntry<Expression> objectref) {
-        return entry(JType.booleanT, new InstanceOfExpr(objectref.value, (ReferenceType) Decompiler.convertType(JType.instance(((Constant<Klass>) instruction.indexbyte).value))));
+        return entry(JType.booleanT, new InstanceOfExpr(objectref.value, (ReferenceType) Decompiler.convertType(((Constant<JType>) instruction.indexbyte).value)));
     }
 
     @Override
     public StackEntry<Expression> reduceIor(Ior instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertTypes(psuedoInts);
-        value2.type.assertTypes(psuedoInts);
+        value1.type.assertAssignableTo(JType.intT);
+        value2.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.BINARY_OR));
     }
 
     @Override
     public StackEntry<Expression> reduceIrem(Irem instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertTypes(psuedoInts);
-        value2.type.assertTypes(psuedoInts);
+        value1.type.assertAssignableTo(JType.intT);
+        value2.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.REMAINDER));
     }
 
     @Override
     public void reduceIreturn(Ireturn instruction, StackEntry<Expression> value) {
-        value.type.assertTypes(psuedoInts);
+        value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ReturnStmt(value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceIshl(Ishl instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertTypes(psuedoInts);
-        value2.type.assertTypes(psuedoInts);
+        value1.type.assertAssignableTo(JType.intT);
+        value2.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.LEFT_SHIFT));
     }
 
     @Override
     public StackEntry<Expression> reduceIshr(Ishr instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertTypes(psuedoInts);
-        value2.type.assertTypes(psuedoInts);
+        value1.type.assertAssignableTo(JType.intT);
+        value2.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.SIGNED_RIGHT_SHIFT));
     }
 
     @Override
     public void reduceIstore(Istore instruction, StackEntry<Expression> value) {
-        instruction.index.setOrAssertTypes(psuedoInts);
-        value.type.assertTypes(psuedoInts);
+        instruction.index.resetType(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index.index), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceIstore_0(Istore_0 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(0).setOrAssertTypes(psuedoInts);
-        value.type.assertTypes(psuedoInts);
+        method.getOrMakeLocal(0).resetType(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v0"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceIstore_1(Istore_1 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(1).setOrAssertTypes(psuedoInts);
-        value.type.assertTypes(psuedoInts);
+        method.getOrMakeLocal(1).resetType(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v1"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceIstore_2(Istore_2 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(2).setOrAssertTypes(psuedoInts);
-        value.type.assertTypes(psuedoInts);
+        method.getOrMakeLocal(2).resetType(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v2"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceIstore_3(Istore_3 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(3).setOrAssertTypes(psuedoInts);
-        value.type.assertTypes(psuedoInts);
+        method.getOrMakeLocal(3).resetType(JType.intT);
+        value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v3"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public StackEntry<Expression> reduceIsub(Isub instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertTypes(psuedoInts);
-        value2.type.assertTypes(psuedoInts);
+        value1.type.assertAssignableTo(JType.intT);
+        value2.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.MINUS));
     }
 
     @Override
     public StackEntry<Expression> reduceIushr(Iushr instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertTypes(psuedoInts);
-        value2.type.assertTypes(psuedoInts);
+        value1.type.assertAssignableTo(JType.intT);
+        value2.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.UNSIGNED_RIGHT_SHIFT));
     }
 
     @Override
     public StackEntry<Expression> reduceIxor(Ixor instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertTypes(psuedoInts);
-        value2.type.assertTypes(psuedoInts);
+        value1.type.assertAssignableTo(JType.intT);
+        value2.type.assertAssignableTo(JType.intT);
         return entry(JType.intT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.XOR));
     }
 
@@ -936,49 +922,49 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceL2f(L2f instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.longT);
+        value.type.assertAssignableTo(JType.longT);
         return entry(JType.floatT, new CastExpr(PrimitiveType.floatType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceL2i(L2i instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.longT);
+        value.type.assertAssignableTo(JType.longT);
         return entry(JType.intT, new CastExpr(PrimitiveType.intType(), value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceLadd(Ladd instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.PLUS));
     }
 
     @Override
     public StackEntry<Expression> reduceLaload(Laload instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index) {
-        arrayref.type.elementType().assertType(JType.longT);
-        index.type.assertType(JType.intT);
+        arrayref.type.elementType().assertAssignableTo(JType.longT);
+        index.type.assertAssignableTo(JType.intT);
         return entry(JType.longT, new ArrayAccessExpr(arrayref.value, index.value));
     }
 
     @Override
     public StackEntry<Expression> reduceLand(Land instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.BINARY_AND));
     }
 
     @Override
     public void reduceLastore(Lastore instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index, StackEntry<Expression> value) {
-        arrayref.type.elementType().assertType(JType.longT);
-        index.type.assertType(JType.intT);
-        value.type.assertType(JType.longT);
+        arrayref.type.elementType().assertAssignableTo(JType.longT);
+        index.type.assertAssignableTo(JType.intT);
+        value.type.assertAssignableTo(JType.longT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new ArrayAccessExpr(arrayref.value, index.value), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public StackEntry<Expression> reduceLcmp(Lcmp instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.intT, new MethodCallExpr(new NameExpr("Long"), "compareTo", new NodeList<>(value1.value, value2.value)));
     }
 
@@ -1006,9 +992,9 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
         } else if (constant.value instanceof Double) {
             return entry(JType.doubleT, new DoubleLiteralExpr((Double) constant.value));
         } else if (constant.value instanceof String) {
-            return entry(JType.doubleT, new StringLiteralExpr((String) constant.value));
-        } else if (constant.value instanceof Klass) {
-            return entry(JType.instance(classpath.loadKlass("java/lang/Class")), new FieldAccessExpr(new TypeExpr(Decompiler.convertType(JType.instance((Klass) constant.value))), "class"));
+            return entry(JType.instance(classpath.loadKlass("java/lang/String")), new StringLiteralExpr((String) constant.value));
+        } else if (constant.value instanceof JType) {
+            return entry(JType.instance(classpath.loadKlass("java/lang/Class")), new FieldAccessExpr(new TypeExpr(Decompiler.convertType((JType) constant.value)), "class"));
         } else {
             throw new UnsupportedOperationException("Unexpected literal type loaded: " + constant.value.getClass().getSimpleName());
         }
@@ -1031,141 +1017,141 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceLdiv(Ldiv instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.DIVIDE));
     }
 
     @Override
     public StackEntry<Expression> reduceLload(Lload instruction) {
-        instruction.index.setOrAssertType(JType.longT);
+        instruction.index.resetType(JType.longT);
         return entry(JType.longT, new NameExpr("v" + instruction.index.index));
     }
 
     @Override
     public StackEntry<Expression> reduceLload_0(Lload_0 instruction) {
-        method.getOrMakeLocal(0).setOrAssertType(JType.longT);
+        method.getOrMakeLocal(0).resetType(JType.longT);
         return entry(JType.longT, new NameExpr("v0"));
     }
 
     @Override
     public StackEntry<Expression> reduceLload_1(Lload_1 instruction) {
-        method.getOrMakeLocal(1).setOrAssertType(JType.longT);
+        method.getOrMakeLocal(1).resetType(JType.longT);
         return entry(JType.longT, new NameExpr("v1"));
     }
 
     @Override
     public StackEntry<Expression> reduceLload_2(Lload_2 instruction) {
-        method.getOrMakeLocal(2).setOrAssertType(JType.longT);
+        method.getOrMakeLocal(2).resetType(JType.longT);
         return entry(JType.longT, new NameExpr("v2"));
     }
 
     @Override
     public StackEntry<Expression> reduceLload_3(Lload_3 instruction) {
-        method.getOrMakeLocal(3).setOrAssertType(JType.longT);
+        method.getOrMakeLocal(3).resetType(JType.longT);
         return entry(JType.longT, new NameExpr("v3"));
     }
 
     @Override
     public StackEntry<Expression> reduceLmul(Lmul instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.MULTIPLY));
     }
 
     @Override
     public StackEntry<Expression> reduceLneg(Lneg instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.longT);
+        value.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new UnaryExpr(value.value, UnaryExpr.Operator.MINUS));
     }
 
     @Override
     public StackEntry<Expression> reduceLor(Lor instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.BINARY_OR));
     }
 
     @Override
     public StackEntry<Expression> reduceLrem(Lrem instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.REMAINDER));
     }
 
     @Override
     public void reduceLreturn(Lreturn instruction, StackEntry<Expression> value) {
-        value.type.assertType(JType.longT);
+        value.type.assertAssignableTo(JType.longT);
         emitter.accept(new ReturnStmt(value.value));
     }
 
     @Override
     public StackEntry<Expression> reduceLshl(Lshl instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.LEFT_SHIFT));
     }
 
     @Override
     public StackEntry<Expression> reduceLshr(Lshr instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.SIGNED_RIGHT_SHIFT));
     }
 
     @Override
     public void reduceLstore(Lstore instruction, StackEntry<Expression> value) {
-        instruction.index.setOrAssertType(JType.longT);
-        value.type.assertType(JType.longT);
+        instruction.index.resetType(JType.longT);
+        value.type.assertAssignableTo(JType.longT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index.index), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceLstore_0(Lstore_0 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(0).setOrAssertType(JType.longT);
-        value.type.assertType(JType.longT);
+        method.getOrMakeLocal(0).resetType(JType.longT);
+        value.type.assertAssignableTo(JType.longT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v0"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceLstore_1(Lstore_1 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(1).setOrAssertType(JType.longT);
-        value.type.assertType(JType.longT);
+        method.getOrMakeLocal(1).resetType(JType.longT);
+        value.type.assertAssignableTo(JType.longT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v1"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceLstore_2(Lstore_2 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(2).setOrAssertType(JType.longT);
-        value.type.assertType(JType.longT);
+        method.getOrMakeLocal(2).resetType(JType.longT);
+        value.type.assertAssignableTo(JType.longT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v2"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceLstore_3(Lstore_3 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(03).setOrAssertType(JType.longT);
-        value.type.assertType(JType.longT);
+        method.getOrMakeLocal(03).resetType(JType.longT);
+        value.type.assertAssignableTo(JType.longT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v3"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public StackEntry<Expression> reduceLsub(Lsub instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.MINUS));
     }
 
     @Override
     public StackEntry<Expression> reduceLushr(Lushr instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.UNSIGNED_RIGHT_SHIFT));
     }
 
     @Override
     public StackEntry<Expression> reduceLxor(Lxor instruction, StackEntry<Expression> value1, StackEntry<Expression> value2) {
-        value1.type.assertType(JType.longT);
-        value2.type.assertType(JType.longT);
+        value1.type.assertAssignableTo(JType.longT);
+        value2.type.assertAssignableTo(JType.longT);
         return entry(JType.longT, new BinaryExpr(value1.value, value2.value, BinaryExpr.Operator.XOR));
     }
 
@@ -1181,23 +1167,23 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceMultianewarray(Multianewarray instruction, List<StackEntry<Expression>> dimensions) {
-        Klass klass = ((Constant<Klass>) instruction.indexbyte).value;
+        JType type = ((Constant<JType>) instruction.indexbyte).value;
         List<ArrayCreationLevel> levels = dimensions.stream().map(expr -> {
-            expr.type.assertType(JType.intT);
+            expr.type.assertAssignableTo(JType.intT);
             return new ArrayCreationLevel(expr.value);
         }).collect(Collectors.toList());
-        return entry(JType.array(JType.instance(klass)), new ArrayCreationExpr(new ClassOrInterfaceType(klass.name), new NodeList<>(levels), null));
+        return entry(JType.array(type), new ArrayCreationExpr(Decompiler.convertType(type), new NodeList<>(levels), null));
     }
 
     @Override
     public StackEntry<Expression> reduceNew(New instruction) {
-        Klass klass = ((Constant<Klass>) instruction.indexbyte).value;
-        return entry(JType.instance(klass), new ObjectCreationExpr(null, (ClassOrInterfaceType) Decompiler.convertType(JType.instance(klass)), new NodeList<>()));
+        JType type = ((Constant<JType>) instruction.indexbyte).value;
+        return entry(type, new ObjectCreationExpr(null, (ClassOrInterfaceType) Decompiler.convertType(type), new NodeList<>()));
     }
 
     @Override
     public StackEntry<Expression> reduceNewarray(Newarray instruction, StackEntry<Expression> count) {
-        count.type.assertType(JType.intT);
+        count.type.assertAssignableTo(JType.intT);
         JType arrayType = JType.array(instruction.atype.type);
         return entry(arrayType, new ArrayCreationExpr(Decompiler.convertType(arrayType), new NodeList<>(new ArrayCreationLevel(count.value)), null));
     }
@@ -1224,22 +1210,14 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
     public void reducePutfield(Putfield instruction, StackEntry<Expression> objectref, StackEntry<Expression> value) {
         Field field = ((Constant<Field>) instruction.indexbyte).value;
         objectref.type.assertReference();
-        if (field.type.isTypes(psuedoInts)) {
-            value.type.assertTypes(psuedoInts);
-        } else {
-            value.type.assertAssignableTo(field.type);
-        }
+        value.type.assertAssignableTo(field.type);
         emitter.accept(new ExpressionStmt(new AssignExpr(new FieldAccessExpr(objectref.value, field.name), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reducePutstatic(Putstatic instruction, StackEntry<Expression> value) {
         Field field = ((Constant<Field>) instruction.indexbyte).value;
-        if (field.type.isTypes(psuedoInts)) {
-            value.type.assertTypes(psuedoInts);
-        } else {
-            value.type.assertAssignableTo(field.type);
-        }
+        value.type.assertAssignableTo(field.type);
         emitter.accept(new ExpressionStmt(new AssignExpr(new FieldAccessExpr(new TypeExpr(Decompiler.convertType(JType.instance(field.parent))), field.name), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
@@ -1255,16 +1233,16 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceSaload(Saload instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index) {
-        arrayref.type.elementType().assertType(JType.shortT);
-        index.type.assertType(JType.intT);
+        arrayref.type.elementType().assertAssignableTo(JType.shortT);
+        index.type.assertAssignableTo(JType.intT);
         return entry(JType.shortT, new ArrayAccessExpr(arrayref.value, index.value));
     }
 
     @Override
     public void reduceSastore(Sastore instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index, StackEntry<Expression> value) {
-        arrayref.type.elementType().assertType(JType.shortT);
-        index.type.assertType(JType.intT);
-        value.type.assertType(JType.shortT);
+        arrayref.type.elementType().assertAssignableTo(JType.shortT);
+        index.type.assertAssignableTo(JType.intT);
+        value.type.assertAssignableTo(JType.shortT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new ArrayAccessExpr(arrayref.value, index.value), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
@@ -1323,18 +1301,21 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
         Expression scope;
         String handleName;
         if (type == MethodHandle.MethodHandleType.REF_getField ||
-            type == MethodHandle.MethodHandleType.REF_putField ||
-            type == MethodHandle.MethodHandleType.REF_invokeVirtual ||
+            type == MethodHandle.MethodHandleType.REF_putField) {
+            //TODO: this logic is a hack
+            scope = arguments.size() == 0 ?
+                new TypeExpr(Decompiler.convertType(JType.instance(((Constant<Field>) subHandle.ref).value.parent))) :
+                arguments.get(0).value;
+            handleName = ((Constant<Field>) subHandle.ref).value.name;
+        } else if (type == MethodHandle.MethodHandleType.REF_invokeVirtual ||
             type == MethodHandle.MethodHandleType.REF_invokeSpecial ||
             type == MethodHandle.MethodHandleType.REF_newInvokeSpecial ||
             type == MethodHandle.MethodHandleType.REF_invokeInterface) {
-            scope = arguments.get(0).value;
-            if (type == MethodHandle.MethodHandleType.REF_getField ||
-                type == MethodHandle.MethodHandleType.REF_putField) {
-                handleName = ((Constant<Field>) subHandle.ref).value.name;
-            } else {
-                handleName = ((Constant<Method>) subHandle.ref).value.name;
-            }
+            //TODO: this logic is a hack
+            scope = arguments.size() == 0 ?
+                new TypeExpr(Decompiler.convertType(JType.instance(((Constant<Method>) subHandle.ref).value.parent))) :
+                arguments.get(0).value;
+            handleName = ((Constant<Method>) subHandle.ref).value.name;
         } else if (type == MethodHandle.MethodHandleType.REF_getStatic ||
             type == MethodHandle.MethodHandleType.REF_putStatic) {
             scope = new TypeExpr(Decompiler.convertType(JType.instance(((Constant<Field>) subHandle.ref).value.parent)));
@@ -1358,12 +1339,8 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
             }
             ((ObjectCreationExpr) objectref.value).setArguments(new NodeList<>(arguments.stream().map(x -> x.value).collect(Collectors.toList())));
             return Maybe.empty();
-        } else if (objectref.value instanceof ThisExpr) {
-            // super call
-            // TODO: resolve "super" name from <init>/etc calls
-            return instanceInvokation(objectref, arguments, method);
         } else {
-            throw new RuntimeException("unexpected object ref type in invokespecial: " + objectref.value.getClass().getSimpleName());
+            return instanceInvokation(objectref, arguments, method);
         }
     }
 

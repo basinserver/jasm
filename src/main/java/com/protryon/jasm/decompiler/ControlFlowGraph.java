@@ -8,6 +8,8 @@ import com.protryon.jasm.JType;
 import com.protryon.jasm.Method;
 import com.protryon.jasm.instruction.Instruction;
 import com.protryon.jasm.instruction.instructions.*;
+import com.protryon.jasm.instruction.psuedoinstructions.EnterTry;
+import com.protryon.jasm.instruction.psuedoinstructions.ExitTry;
 import com.protryon.jasm.instruction.psuedoinstructions.Label;
 import com.shapesecurity.functional.F;
 import com.shapesecurity.functional.Pair;
@@ -28,7 +30,6 @@ public class ControlFlowGraph {
         this.nodes = new LinkedList<>();
         this.create();
     }
-
 
     private static final HashMap<Class<? extends Instruction>, F<ImmutableList<StackEntry<Expression>>, Pair<StackEntry<Expression>, ImmutableList<StackEntry<Expression>>>>> conditionCreators = new HashMap<>();
 
@@ -205,18 +206,58 @@ public class ControlFlowGraph {
 
     public class NodeEndThrow extends NodeEnd {
 
-        public StackEntry<Expression> memoException = null;
-
         @Override
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
-            this.memoException = stack.maybeHead().fromJust();
-            //TODO: we need a temp var here
-            return ImmutableList.of(Pair.of(null, stack.maybeHead().toList()));
+            return ImmutableList.empty();
         }
 
         @Override
         public String toString() {
             return "throw";
+        }
+    }
+
+    public class NodeEndEnterTry extends NodeEnd {
+
+        public JType exceptionType = null;
+        public Label catchBlock = null;
+        public Node fallthrough = null;
+
+        public NodeEndEnterTry(JType exceptionType, Label catchBlock, Node fallthrough) {
+            this.exceptionType = exceptionType;
+            this.catchBlock = catchBlock;
+            this.fallthrough = fallthrough;
+        }
+
+        @Override
+        public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
+            return ImmutableList.of(Pair.of(this.fallthrough, stack), Pair.of(labelMap.get(this.catchBlock), ImmutableList.of(new StackEntry<>(exceptionType, new NullLiteralExpr()))));
+        }
+
+        @Override
+        public String toString() {
+            return "enter_try " + exceptionType.toString();
+        }
+    }
+
+    public class NodeEndExitTry extends NodeEnd {
+
+        public Label catchBlock = null;
+        public Node fallthrough = null;
+
+        public NodeEndExitTry(Label catchBlock, Node fallthrough) {
+            this.catchBlock = catchBlock;
+            this.fallthrough = fallthrough;
+        }
+
+        @Override
+        public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
+            return ImmutableList.of(Pair.of(this.fallthrough, stack));
+        }
+
+        @Override
+        public String toString() {
+            return "exit_try";
         }
     }
 
@@ -378,7 +419,7 @@ public class ControlFlowGraph {
 
     private void create() {
         Node currentBlock = new Node();
-        for (Instruction instruction : method.code) {
+        for (Instruction instruction : this.method.code) {
             if (instruction.isControl() || isReturnInstruction(instruction) || isMonitorInstruction(instruction) || instruction instanceof Athrow) {
                 if (instruction instanceof Athrow || isReturnInstruction(instruction)) {
                     currentBlock.instructions.add(instruction);
@@ -439,6 +480,12 @@ public class ControlFlowGraph {
                     currentBlock.end = new NodeEndBranch(instruction, nextBlock, ((Ifnonnull) instruction).branchbyte);
                 } else if (instruction instanceof Ifnull) {
                     currentBlock.end = new NodeEndBranch(instruction, nextBlock, ((Ifnull) instruction).branchbyte);
+                } else if (instruction instanceof EnterTry) {
+                    EnterTry enterTry = (EnterTry) instruction;
+                    currentBlock.end = new NodeEndEnterTry(enterTry.exceptionType, enterTry.catchBlock, nextBlock);
+                } else if (instruction instanceof ExitTry) {
+                    ExitTry exitTry = (ExitTry) instruction;
+                    currentBlock.end = new NodeEndExitTry(exitTry.catchBlock, nextBlock);
                 } else if (instruction instanceof Label) {
                     if (currentBlock.instructions.size() == 0) {
                         currentBlock = null;

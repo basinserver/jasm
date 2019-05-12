@@ -6,10 +6,13 @@ import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.SimpleName;
+import com.github.javaparser.ast.expr.StringLiteralExpr;
+import com.github.javaparser.ast.expr.VariableDeclarationExpr;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.*;
 import com.protryon.jasm.*;
 import com.protryon.jasm.instruction.StackDirector;
+import com.protryon.jasm.instruction.psuedoinstructions.Label;
 import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.data.ImmutableList;
 
@@ -91,10 +94,10 @@ public final class Decompiler {
 
         int argumentIndex = 0;
         if (!method.isStatic) {
-            method.getOrMakeLocal(argumentIndex++).setOrAssertType(JType.instance(method.parent));
+            method.getOrMakeLocal(argumentIndex++).resetType(JType.instance(method.parent));
         }
         for (JType argumentType : method.descriptor.parameters) {
-            method.getOrMakeLocal(argumentIndex++).setOrAssertType(argumentType);
+            method.getOrMakeLocal(argumentIndex++).resetType(argumentType);
             if (argumentType.computationType == 2) {
                 argumentIndex++;
             }
@@ -115,13 +118,12 @@ public final class Decompiler {
             if (unclobberedMemo.contains(pair.left)) {
                 // not illegal necessarily but bad!
                 // throw new RuntimeException("WARNING: clobbered stack state (unbalanced loop)");
-
             }
             unclobberedMemo.add(pair.left);
             memo.add(pair);
             List<Statement> outStatements = new ArrayList<>();
             // System.out.println(statement.toString());
-            DecompilerReducer reducer = new DecompilerReducer(classpath, method, outStatements::add, () -> tempCounter[0]++);
+            DecompilerReducer reducer = new DecompilerReducer(classpath, method, outStatements::add);
             var stack = StackDirector.reduceInstructions(reducer, pair.left.instructions, pair.right);
             decompiler.basicBlocks.put(pair.left, outStatements);
             if (pair.left.end != null) {
@@ -199,13 +201,24 @@ public final class Decompiler {
         }
     }
 
-    private final Set<ControlFlowGraph.Node> emitted = new HashSet<>();
     private final HashMap<ControlFlowGraph.Node, ImmutableList<ControlFlowGraph.Node>> memoEmission = new HashMap<>();
+    // used to terminate the codegen of a try block NOTE this terminates for some ExitNode for which this label is the catchBlock NOT the label itself
+    private Label terminateAt = null;
 
+    protected static Pair<Statement, String> tempify(Method method, StackEntry<Expression> value) {
+        String tempName = "t" + method.tempVariableCounter++;
+        Statement statement = new ExpressionStmt(new VariableDeclarationExpr(new VariableDeclarator(Decompiler.convertType(value.type), tempName, value.value)));
+        return Pair.of(statement, tempName);
+    }
+
+    //TODO: probably: node duplication for return short circuiting with try/catches
     private ImmutableList<ControlFlowGraph.Node> emitNode(ControlFlowGraph.Node node, List<Statement> outStatements) {
-        if (emitted.contains(node)) {
+        if (memoEmission.containsKey(node)) {
+            outStatements.add(new ExpressionStmt(new StringLiteralExpr("memoized?")));
+            // this might not be right!
             return ImmutableList.empty(); // in progress
         }
+        memoEmission.put(node, ImmutableList.empty());
         List<ControlFlowGraph.Node> emitted = new ArrayList<>();
         emitted.add(node);
         if (node.end instanceof ControlFlowGraph.NodeEndJump) {
@@ -217,6 +230,39 @@ public final class Decompiler {
             emitted.add(node);
             outStatements.addAll(this.basicBlocks.get(node));
             emitted.addAll(emitNode(((ControlFlowGraph.NodeEndFallthrough) node.end).fallthrough, outStatements).toArrayList());
+        } else if (node.end instanceof ControlFlowGraph.NodeEndEnterTry) {
+            emitted.add(node);
+            outStatements.addAll(this.basicBlocks.get(node));
+            Label lastTerminateAt = this.terminateAt;
+            Label catchBlockLabel = this.terminateAt = ((ControlFlowGraph.NodeEndEnterTry) node.end).catchBlock;
+            List<Statement> exceptionalBlock = new ArrayList<>();
+            List<ControlFlowGraph.Node> exceptionalEmitted = emitNode(((ControlFlowGraph.NodeEndEnterTry) node.end).fallthrough, exceptionalBlock).toArrayList();
+            emitted.addAll(exceptionalEmitted);
+            this.terminateAt = lastTerminateAt;
+            ControlFlowGraph.Node lastExceptionalNode = exceptionalEmitted.get(exceptionalEmitted.size() - 1);
+            if (!(lastExceptionalNode.end instanceof ControlFlowGraph.NodeEndExitTry)) {
+                throw new RuntimeException("unexpected try-block termination node end type: " + lastExceptionalNode.end.getClass().getSimpleName());
+            }
+            if (((ControlFlowGraph.NodeEndExitTry) lastExceptionalNode.end).catchBlock != catchBlockLabel) {
+                throw new RuntimeException("broken exception stack");
+            }
+            ControlFlowGraph.Node postCatchJumpBlock = ((ControlFlowGraph.NodeEndExitTry) lastExceptionalNode.end).fallthrough;
+            if (!(postCatchJumpBlock.end instanceof ControlFlowGraph.NodeEndJump)) {
+                throw new RuntimeException("unexpected try-block post-termination node end type: " + postCatchJumpBlock.end.getClass().getSimpleName());
+            }
+            emitted.addAll(emitNode(postCatchJumpBlock, exceptionalBlock).toArrayList());
+            Label postCatchBlockLabel = ((ControlFlowGraph.NodeEndJump) postCatchJumpBlock.end).target;
+            lastTerminateAt = this.terminateAt;
+            this.terminateAt = postCatchBlockLabel;
+            List<Statement> catchBlock = new ArrayList<>();
+            emitted.addAll(emitNode(graph.labelMap.get(catchBlockLabel), catchBlock).toArrayList());
+            this.terminateAt = lastTerminateAt;
+
+            //TODO: proper expression naming/stack resolution?
+            outStatements.add(new TryStmt(new BlockStmt(new NodeList<>(exceptionalBlock)), new NodeList<>(new CatchClause(new NodeList<>(), new NodeList<>(), (ClassOrInterfaceType) Decompiler.convertType(((ControlFlowGraph.NodeEndEnterTry) node.end).exceptionType), new SimpleName("e"), new BlockStmt(new NodeList<>(catchBlock)))), new BlockStmt(new NodeList<>())));
+            emitted.addAll(emitNode(graph.labelMap.get(postCatchBlockLabel), outStatements).toArrayList());
+        } else if (node.end instanceof ControlFlowGraph.NodeEndExitTry) {
+            return ImmutableList.of(node);
         } else if (node.end instanceof ControlFlowGraph.NodeEndBranch) {
             outStatements.addAll(this.basicBlocks.get(node));
             ControlFlowGraph.NodeEndBranch branch = (ControlFlowGraph.NodeEndBranch) node.end;
@@ -247,7 +293,7 @@ public final class Decompiler {
             emitted.addAll(targetEmission.toArrayList());
         } else if (node.end instanceof ControlFlowGraph.NodeEndThrow) {
             emitted.add(node);
-            outStatements.add(new ThrowStmt(((ControlFlowGraph.NodeEndThrow) node.end).memoException.value));
+            outStatements.addAll(this.basicBlocks.get(node));
         } else if (node.end instanceof ControlFlowGraph.NodeEndMonitorEnter) {
             // TODO:
         } else if (node.end instanceof ControlFlowGraph.NodeEndMonitorExit) {
