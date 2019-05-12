@@ -24,7 +24,7 @@
         <dependency>
             <groupId>com.github.javaparser</groupId>
             <artifactId>javaparser-core</artifactId>
-            <version>3.13.10</version>
+            <version>3.14.1-SNAPSHOT</version> <!-- https://github.com/javaparser/javaparser/pull/2223 required -->
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

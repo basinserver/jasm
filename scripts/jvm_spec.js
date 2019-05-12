@@ -307,7 +307,7 @@ public final class StackDirector {
 
     }
 
-    public static <T> ImmutableList<T> reduceInstructions(StackReducer<T> reducer, Iterable<Instruction> code, ImmutableList<T> stackPrefix) {
+    public static <T> ImmutableList<T> reduceInstructions(StackReducer<T> reducer, Iterable<Instruction> code, ImmutableList<T> stackPrefix, F<T, Boolean> isDoubled) {
         ImmutableList<T> stack = stackPrefix;
         for (Instruction i : code) {
             switch (i.opcode()) {
@@ -325,7 +325,7 @@ ${ins.popped.slice(0).reverse().map(x => `                T ${x} = stack.maybeHe
             }`;
 }).filter(x => x.length > 0).join('\n')}
             default:
-                stack = ManualStackDirector.reduceInstruction(reducer, i, stack);
+                stack = ManualStackDirector.reduceInstruction(reducer, i, stack, isDoubled);
             }
         }
         return stack;

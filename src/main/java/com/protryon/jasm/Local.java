@@ -19,4 +19,9 @@ public final class Local {
         return this.type;
     }
 
+    @Override
+    public String toString() {
+        return "v" + this.index;
+    }
+
 }

@@ -155,7 +155,7 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
     public void reduceBastore(Bastore instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index, StackEntry<Expression> value) {
         arrayref.type.elementType();
         index.type.assertAssignableTo(JType.intT);
-        value.type.assertReference();
+        value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new ArrayAccessExpr(arrayref.value, index.value), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
@@ -175,7 +175,7 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
     public void reduceCastore(Castore instruction, StackEntry<Expression> arrayref, StackEntry<Expression> index, StackEntry<Expression> value) {
         arrayref.type.elementType().assertAssignableTo(JType.charT);
         index.type.assertAssignableTo(JType.intT);
-        value.type.assertReference();
+        value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new ArrayAccessExpr(arrayref.value, index.value), value.value, AssignExpr.Operator.ASSIGN)));
     }
 

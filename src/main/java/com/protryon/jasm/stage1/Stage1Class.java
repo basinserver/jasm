@@ -221,11 +221,10 @@ public class Stage1Class {
                         instructionPCToIndex.put(pc, newMethod.code.size());
                         newMethod.code.add(ins);
                     }
-                    HashMap<Integer, List<Instruction>> instructionsToAdd = new HashMap<>();
+                    HashMap<Integer, LinkedList<Instruction>> instructionsToAdd = new HashMap<>();
                     labelsToAdd.forEach((pc, label) -> {
                         instructionsToAdd.put(instructionPCToIndex.get(pc), ImmutableList.of((Instruction) label).toLinkedList());
                     });
-                    //TODO: practically wont happen but possible collision ^^
                     int exceptionTableCount = in.readUnsignedShort();
                     for (int j = 0; j < exceptionTableCount; ++j) {
                         int start = in.readUnsignedShort();
@@ -244,12 +243,12 @@ public class Stage1Class {
                         Label label = newMethod.makeCatch("_catch_" + startIndex + "_" + endIndex + "_" + jtype.javaName);
                         EnterTry enter = new EnterTry(label, jtype);
                         ExitTry exit = new ExitTry(label);
-                        instructionsToAdd.computeIfAbsent(startIndex, x -> new LinkedList<>()).add(enter);
-                        instructionsToAdd.computeIfAbsent(handlerIndex, x -> new LinkedList<>()).add(label);
+                        instructionsToAdd.computeIfAbsent(startIndex, x -> new LinkedList<>()).addLast(enter);
+                        instructionsToAdd.computeIfAbsent(handlerIndex, x -> new LinkedList<>()).addLast(label);
                         if (endIndex == -1) {
                             newMethod.code.add(exit);
                         } else {
-                            instructionsToAdd.computeIfAbsent(endIndex, x -> new LinkedList<>()).add(exit);
+                            instructionsToAdd.computeIfAbsent(endIndex, x -> new LinkedList<>()).addFirst(exit);
                         }
                     }
                     ListIterator<Instruction> iterator = newMethod.code.listIterator();

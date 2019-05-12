@@ -7,6 +7,7 @@ import com.protryon.jasm.instruction.instructions.*;
 import com.protryon.jasm.instruction.psuedoinstructions.EnterTry;
 import com.protryon.jasm.instruction.psuedoinstructions.ExitTry;
 import com.protryon.jasm.instruction.psuedoinstructions.Label;
+import com.shapesecurity.functional.F;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 
@@ -16,13 +17,19 @@ public final class ManualStackDirector {
 
     }
 
-    protected static <T> ImmutableList<T> reduceInstruction(StackReducer<T> reducer, Instruction instruction, ImmutableList<T> stack) {
+    protected static <T> ImmutableList<T> reduceInstruction(StackReducer<T> reducer, Instruction instruction, ImmutableList<T> stack, F<T, Boolean> isDoubled) {
         switch (instruction.opcode()) {
             case 88: {
-                throw new UnsupportedOperationException("pop2");
-                // reducer.reducePop2((Pop2) i);
-
-                // break;
+                T popped = stack.maybeHead().fromJust();
+                Maybe<T> secondOption = stack.maybeHead();
+                if (isDoubled.apply(popped)) {
+                    secondOption = Maybe.empty();
+                    stack = stack.maybeTail().fromJust();
+                } else {
+                    stack = stack.drop(2);
+                }
+                reducer.reducePop2((Pop2) instruction, popped, secondOption);
+                break;
             }
             case 91: {
                 throw new UnsupportedOperationException("dup_x2");
