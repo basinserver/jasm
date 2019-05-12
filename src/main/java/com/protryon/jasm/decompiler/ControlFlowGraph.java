@@ -409,7 +409,8 @@ public class ControlFlowGraph {
             instruction instanceof Dreturn ||
             instruction instanceof Freturn ||
             instruction instanceof Ireturn ||
-            instruction instanceof Lreturn;
+            instruction instanceof Lreturn ||
+            instruction instanceof Return;
     }
 
     public static boolean isMonitorInstruction(Instruction instruction) {

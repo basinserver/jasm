@@ -24,11 +24,13 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     private final Classpath classpath;
     private final Method method;
+    private final LocalContext context;
     private final Consumer<Statement> emitter;
 
-    public DecompilerReducer(Classpath classpath, Method method, Consumer<Statement> emitter) {
+    public DecompilerReducer(Classpath classpath, Method method, LocalContext context, Consumer<Statement> emitter) {
         this.classpath = classpath;
         this.method = method;
+        this.context = context;
         this.emitter = emitter;
     }
 
@@ -57,31 +59,31 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceAload(Aload instruction) {
-        return entry(instruction.index.type, new NameExpr("v" + instruction.index.index));
+        return entry(context.getOrMakeLocal(instruction.index, JType.nullT).type, new NameExpr("v" + instruction.index));
     }
 
     @Override
     public StackEntry<Expression> reduceAload_0(Aload_0 instruction) {
         if (method.isStatic) {
-            return entry(method.getOrMakeLocal(0).type, new NameExpr("v0"));
+            return context.getOrMakeLocal(0, JType.nullT).stackify();
         } else {
-            return entry(method.getOrMakeLocal(0).resetType(JType.instance(method.parent)), new ThisExpr());
+            return entry(context.getOrMakeLocal(0, JType.instance(method.parent)).type, new ThisExpr());
         }
     }
 
     @Override
     public StackEntry<Expression> reduceAload_1(Aload_1 instruction) {
-        return entry(method.getOrMakeLocal(1).type, new NameExpr("v1"));
+        return entry(context.getOrMakeLocal(1, JType.nullT).type, new NameExpr("v1"));
     }
 
     @Override
     public StackEntry<Expression> reduceAload_2(Aload_2 instruction) {
-        return entry(method.getOrMakeLocal(2).type, new NameExpr("v2"));
+        return entry(context.getOrMakeLocal(2, JType.nullT).type, new NameExpr("v2"));
     }
 
     @Override
     public StackEntry<Expression> reduceAload_3(Aload_3 instruction) {
-        return entry(method.getOrMakeLocal(3).type, new NameExpr("v3"));
+        return entry(context.getOrMakeLocal(3, JType.nullT).type, new NameExpr("v3"));
     }
 
     @Override
@@ -105,35 +107,35 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public void reduceAstore(Astore instruction, StackEntry<Expression> objectref) {
-        instruction.index.resetType(objectref.type);
+        context.getOrMakeLocal(instruction.index, objectref.type);
         objectref.type.assertReference();
-        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index.index), objectref.value, AssignExpr.Operator.ASSIGN)));
+        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index), objectref.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceAstore_0(Astore_0 instruction, StackEntry<Expression> objectref) {
-        method.getOrMakeLocal(0).resetType(objectref.type);
+        context.getOrMakeLocal(0, objectref.type);
         objectref.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v0"), objectref.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceAstore_1(Astore_1 instruction, StackEntry<Expression> objectref) {
-        method.getOrMakeLocal(1).resetType(objectref.type);
+        context.getOrMakeLocal(1, objectref.type);
         objectref.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v1"), objectref.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceAstore_2(Astore_2 instruction, StackEntry<Expression> objectref) {
-        method.getOrMakeLocal(2).resetType(objectref.type);
+        context.getOrMakeLocal(2, objectref.type);
         objectref.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v2"), objectref.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceAstore_3(Astore_3 instruction, StackEntry<Expression> objectref) {
-        method.getOrMakeLocal(3).resetType(objectref.type);
+        context.getOrMakeLocal(3, objectref.type);
         objectref.type.assertReference();
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v3"), objectref.value, AssignExpr.Operator.ASSIGN)));
     }
@@ -253,31 +255,31 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceDload(Dload instruction) {
-        instruction.index.resetType(JType.doubleT);
-        return entry(JType.doubleT, new NameExpr("v" + instruction.index.index));
+        context.getOrMakeLocal(instruction.index, JType.doubleT);
+        return entry(JType.doubleT, new NameExpr("v" + instruction.index));
     }
 
     @Override
     public StackEntry<Expression> reduceDload_0(Dload_0 instruction) {
-        method.getOrMakeLocal(0).resetType(JType.doubleT);
+        context.getOrMakeLocal(0, JType.doubleT);
         return entry(JType.doubleT, new NameExpr("v0"));
     }
 
     @Override
     public StackEntry<Expression> reduceDload_1(Dload_1 instruction) {
-        method.getOrMakeLocal(1).resetType(JType.doubleT);
+        context.getOrMakeLocal(1, JType.doubleT);
         return entry(JType.doubleT, new NameExpr("v1"));
     }
 
     @Override
     public StackEntry<Expression> reduceDload_2(Dload_2 instruction) {
-        method.getOrMakeLocal(2).resetType(JType.doubleT);
+        context.getOrMakeLocal(2, JType.doubleT);
         return entry(JType.doubleT, new NameExpr("v2"));
     }
 
     @Override
     public StackEntry<Expression> reduceDload_3(Dload_3 instruction) {
-        method.getOrMakeLocal(3).resetType(JType.doubleT);
+        context.getOrMakeLocal(3, JType.doubleT);
         return entry(JType.doubleT, new NameExpr("v3"));
     }
 
@@ -303,31 +305,31 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public void reduceDstore(Dstore instruction, StackEntry<Expression> value) {
-        instruction.index.resetType(JType.doubleT);
-        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index.index), value.value, AssignExpr.Operator.ASSIGN)));
+        context.getOrMakeLocal(instruction.index, JType.doubleT);
+        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceDstore_0(Dstore_0 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(0).resetType(JType.doubleT);
+        context.getOrMakeLocal(0, JType.doubleT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v0"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceDstore_1(Dstore_1 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(1).resetType(JType.doubleT);
+        context.getOrMakeLocal(1, JType.doubleT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v1"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceDstore_2(Dstore_2 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(2).resetType(JType.doubleT);
+        context.getOrMakeLocal(2, JType.doubleT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v2"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceDstore_3(Dstore_3 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(3).resetType(JType.doubleT);
+        context.getOrMakeLocal(3, JType.doubleT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v3"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
@@ -456,31 +458,31 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceFload(Fload instruction) {
-        instruction.index.resetType(JType.floatT);
-        return entry(JType.floatT, new NameExpr("v" + instruction.index.index));
+        context.getOrMakeLocal(instruction.index, JType.floatT);
+        return entry(JType.floatT, new NameExpr("v" + instruction.index));
     }
 
     @Override
     public StackEntry<Expression> reduceFload_0(Fload_0 instruction) {
-        method.getOrMakeLocal(0).resetType(JType.floatT);
+        context.getOrMakeLocal(0, JType.floatT);
         return entry(JType.floatT, new NameExpr("v0"));
     }
 
     @Override
     public StackEntry<Expression> reduceFload_1(Fload_1 instruction) {
-        method.getOrMakeLocal(1).resetType(JType.floatT);
+        context.getOrMakeLocal(1, JType.floatT);
         return entry(JType.floatT, new NameExpr("v1"));
     }
 
     @Override
     public StackEntry<Expression> reduceFload_2(Fload_2 instruction) {
-        method.getOrMakeLocal(2).resetType(JType.floatT);
+        context.getOrMakeLocal(2, JType.floatT);
         return entry(JType.floatT, new NameExpr("v2"));
     }
 
     @Override
     public StackEntry<Expression> reduceFload_3(Fload_3 instruction) {
-        method.getOrMakeLocal(3).resetType(JType.floatT);
+        context.getOrMakeLocal(3, JType.floatT);
         return entry(JType.floatT, new NameExpr("v3"));
     }
 
@@ -512,35 +514,35 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public void reduceFstore(Fstore instruction, StackEntry<Expression> value) {
-        instruction.index.resetType(JType.floatT);
+        context.getOrMakeLocal(instruction.index, JType.floatT);
         value.type.assertAssignableTo(JType.floatT);
-        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index.index), value.value, AssignExpr.Operator.ASSIGN)));
+        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceFstore_0(Fstore_0 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(0).resetType(JType.floatT);
+        context.getOrMakeLocal(0, JType.floatT);
         value.type.assertAssignableTo(JType.floatT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v0"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceFstore_1(Fstore_1 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(1).resetType(JType.floatT);
+        context.getOrMakeLocal(1, JType.floatT);
         value.type.assertAssignableTo(JType.floatT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v1"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceFstore_2(Fstore_2 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(2).resetType(JType.floatT);
+        context.getOrMakeLocal(2, JType.floatT);
         value.type.assertAssignableTo(JType.floatT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v2"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceFstore_3(Fstore_3 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(3).resetType(JType.floatT);
+        context.getOrMakeLocal(3, JType.floatT);
         value.type.assertAssignableTo(JType.floatT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v3"), value.value, AssignExpr.Operator.ASSIGN)));
     }
@@ -764,36 +766,36 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
     @Override
     public void reduceIinc(Iinc instruction) {
         // TODO: this is unsafe, must be inlined probably
-        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index.index), new IntegerLiteralExpr(instruction.const_), AssignExpr.Operator.PLUS)));
+        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index), new IntegerLiteralExpr(instruction.const_), AssignExpr.Operator.PLUS)));
     }
 
     @Override
     public StackEntry<Expression> reduceIload(Iload instruction) {
-        instruction.index.resetType(JType.intT);
-        return entry(JType.intT, new NameExpr("v" + instruction.index.index));
+        context.getOrMakeLocal(instruction.index, JType.intT);
+        return entry(JType.intT, new NameExpr("v" + instruction.index));
     }
 
     @Override
     public StackEntry<Expression> reduceIload_0(Iload_0 instruction) {
-        method.getOrMakeLocal(0).resetType(JType.intT);
+        context.getOrMakeLocal(0, JType.intT);
         return entry(JType.intT, new NameExpr("v0"));
     }
 
     @Override
     public StackEntry<Expression> reduceIload_1(Iload_1 instruction) {
-        method.getOrMakeLocal(1).resetType(JType.intT);
+        context.getOrMakeLocal(1, JType.intT);
         return entry(JType.intT, new NameExpr("v1"));
     }
 
     @Override
     public StackEntry<Expression> reduceIload_2(Iload_2 instruction) {
-        method.getOrMakeLocal(2).resetType(JType.intT);
+        context.getOrMakeLocal(2, JType.intT);
         return entry(JType.intT, new NameExpr("v2"));
     }
 
     @Override
     public StackEntry<Expression> reduceIload_3(Iload_3 instruction) {
-        method.getOrMakeLocal(3).resetType(JType.intT);
+        context.getOrMakeLocal(3, JType.intT);
         return entry(JType.intT, new NameExpr("v3"));
     }
 
@@ -851,35 +853,35 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public void reduceIstore(Istore instruction, StackEntry<Expression> value) {
-        instruction.index.resetType(JType.intT);
+        context.getOrMakeLocal(instruction.index, JType.intT);
         value.type.assertAssignableTo(JType.intT);
-        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index.index), value.value, AssignExpr.Operator.ASSIGN)));
+        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceIstore_0(Istore_0 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(0).resetType(JType.intT);
+        context.getOrMakeLocal(0, JType.intT);
         value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v0"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceIstore_1(Istore_1 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(1).resetType(JType.intT);
+        context.getOrMakeLocal(1, JType.intT);
         value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v1"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceIstore_2(Istore_2 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(2).resetType(JType.intT);
+        context.getOrMakeLocal(2, JType.intT);
         value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v2"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceIstore_3(Istore_3 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(3).resetType(JType.intT);
+        context.getOrMakeLocal(3, JType.intT);
         value.type.assertAssignableTo(JType.intT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v3"), value.value, AssignExpr.Operator.ASSIGN)));
     }
@@ -1024,31 +1026,31 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public StackEntry<Expression> reduceLload(Lload instruction) {
-        instruction.index.resetType(JType.longT);
-        return entry(JType.longT, new NameExpr("v" + instruction.index.index));
+        context.getOrMakeLocal(instruction.index, JType.longT);
+        return entry(JType.longT, new NameExpr("v" + instruction.index));
     }
 
     @Override
     public StackEntry<Expression> reduceLload_0(Lload_0 instruction) {
-        method.getOrMakeLocal(0).resetType(JType.longT);
+        context.getOrMakeLocal(0, JType.longT);
         return entry(JType.longT, new NameExpr("v0"));
     }
 
     @Override
     public StackEntry<Expression> reduceLload_1(Lload_1 instruction) {
-        method.getOrMakeLocal(1).resetType(JType.longT);
+        context.getOrMakeLocal(1, JType.longT);
         return entry(JType.longT, new NameExpr("v1"));
     }
 
     @Override
     public StackEntry<Expression> reduceLload_2(Lload_2 instruction) {
-        method.getOrMakeLocal(2).resetType(JType.longT);
+        context.getOrMakeLocal(2, JType.longT);
         return entry(JType.longT, new NameExpr("v2"));
     }
 
     @Override
     public StackEntry<Expression> reduceLload_3(Lload_3 instruction) {
-        method.getOrMakeLocal(3).resetType(JType.longT);
+        context.getOrMakeLocal(3, JType.longT);
         return entry(JType.longT, new NameExpr("v3"));
     }
 
@@ -1101,35 +1103,35 @@ public class DecompilerReducer extends StackReducer<StackEntry<Expression>> {
 
     @Override
     public void reduceLstore(Lstore instruction, StackEntry<Expression> value) {
-        instruction.index.resetType(JType.longT);
+        context.getOrMakeLocal(instruction.index, JType.longT);
         value.type.assertAssignableTo(JType.longT);
-        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index.index), value.value, AssignExpr.Operator.ASSIGN)));
+        emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v" + instruction.index), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceLstore_0(Lstore_0 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(0).resetType(JType.longT);
+        context.getOrMakeLocal(0, JType.longT);
         value.type.assertAssignableTo(JType.longT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v0"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceLstore_1(Lstore_1 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(1).resetType(JType.longT);
+        context.getOrMakeLocal(1, JType.longT);
         value.type.assertAssignableTo(JType.longT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v1"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceLstore_2(Lstore_2 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(2).resetType(JType.longT);
+        context.getOrMakeLocal(2, JType.longT);
         value.type.assertAssignableTo(JType.longT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v2"), value.value, AssignExpr.Operator.ASSIGN)));
     }
 
     @Override
     public void reduceLstore_3(Lstore_3 instruction, StackEntry<Expression> value) {
-        method.getOrMakeLocal(03).resetType(JType.longT);
+        context.getOrMakeLocal(03, JType.longT);
         value.type.assertAssignableTo(JType.longT);
         emitter.accept(new ExpressionStmt(new AssignExpr(new NameExpr("v3"), value.value, AssignExpr.Operator.ASSIGN)));
     }

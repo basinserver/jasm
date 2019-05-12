@@ -222,9 +222,6 @@ public class Stage1Class {
                         newMethod.code.add(ins);
                     }
                     HashMap<Integer, LinkedList<Instruction>> instructionsToAdd = new HashMap<>();
-                    labelsToAdd.forEach((pc, label) -> {
-                        instructionsToAdd.put(instructionPCToIndex.get(pc), ImmutableList.of((Instruction) label).toLinkedList());
-                    });
                     int exceptionTableCount = in.readUnsignedShort();
                     for (int j = 0; j < exceptionTableCount; ++j) {
                         int start = in.readUnsignedShort();
@@ -251,6 +248,9 @@ public class Stage1Class {
                             instructionsToAdd.computeIfAbsent(endIndex, x -> new LinkedList<>()).addFirst(exit);
                         }
                     }
+                    labelsToAdd.forEach((pc, label) -> {
+                        instructionsToAdd.computeIfAbsent(instructionPCToIndex.get(pc), x -> new LinkedList<>()).addFirst(label);
+                    });
                     ListIterator<Instruction> iterator = newMethod.code.listIterator();
                     int unmodifiedIndex = 0;
                     while (iterator.hasNext()) {

@@ -139,6 +139,9 @@ public class JType {
     }
 
     public JType elementType() {
+        if (this == JType.nullT) {
+            return JType.nullT;
+        }
         if (!(this instanceof JTypeArray)) {
             throw new RuntimeException("Illegal non-array when expecting array type: " + this.toString());
         }

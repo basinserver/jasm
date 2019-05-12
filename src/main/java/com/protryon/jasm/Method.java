@@ -31,21 +31,8 @@ public class Method {
 
     public int tempVariableCounter = 0;
 
-    public ArrayList<Local> locals = new ArrayList<>();
     public LinkedList<Instruction> code = new LinkedList<>();
     public LinkedHashMap<String, Label> labels = new LinkedHashMap<>();
-
-    public Local getOrMakeLocal(int index) {
-        if (locals.size() <= index || locals.get(index) == null) {
-            Local local = new Local(this, index);
-            while (locals.size() <= index) {
-                locals.add(null);
-            }
-            locals.set(index, local);
-            return local;
-        }
-        return locals.get(index);
-    }
 
     public Label getOrMakeLabel(String name) {
         if (labels.containsKey(name)) {

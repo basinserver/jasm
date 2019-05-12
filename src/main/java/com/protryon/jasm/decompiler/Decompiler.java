@@ -14,6 +14,7 @@ import com.protryon.jasm.*;
 import com.protryon.jasm.instruction.StackDirector;
 import com.protryon.jasm.instruction.psuedoinstructions.Label;
 import com.shapesecurity.functional.Pair;
+import com.shapesecurity.functional.Tuple3;
 import com.shapesecurity.functional.data.ImmutableList;
 
 import java.util.*;
@@ -81,7 +82,6 @@ public final class Decompiler {
     }
 
     public static MethodDeclaration decompileMethod(Classpath classpath, Method method) {
-        int[] tempCounter = new int[]{0}; // java hack
 
         ControlFlowGraph g = new ControlFlowGraph(method);
 
@@ -89,45 +89,42 @@ public final class Decompiler {
         Set<ControlFlowGraph.Node> unclobberedMemo = new HashSet<>();
         Set<Pair<ControlFlowGraph.Node, ImmutableList<StackEntry<Expression>>>> memo = new HashSet<>();
 
-        Stack<Pair<ControlFlowGraph.Node, ImmutableList<StackEntry<Expression>>>> pendingNodes = new Stack<>();
+        Stack<Tuple3<ControlFlowGraph.Node, ImmutableList<StackEntry<Expression>>, LocalContext>> pendingNodes = new Stack<>();
         Decompiler decompiler = new Decompiler(g);
-
+        LocalContext rootContext = new LocalContext();
         int argumentIndex = 0;
         if (!method.isStatic) {
-            method.getOrMakeLocal(argumentIndex++).resetType(JType.instance(method.parent));
+            rootContext.getOrMakeLocal(argumentIndex++, JType.instance(method.parent));
         }
         for (JType argumentType : method.descriptor.parameters) {
-            method.getOrMakeLocal(argumentIndex++).resetType(argumentType);
+            rootContext.getOrMakeLocal(argumentIndex++, argumentType);
             if (argumentType.computationType == 2) {
                 argumentIndex++;
             }
         }
 
         if (g.nodes.size() > 0) {
-            pendingNodes.push(Pair.of(g.nodes.getFirst(), ImmutableList.empty()));
+            pendingNodes.push(Tuple3.of(g.nodes.getFirst(), ImmutableList.empty(), rootContext.fork()));
         }
         while (!pendingNodes.empty()) {
-            var pair = pendingNodes.pop();
-            if (memo.contains(pair)) {
+            var tuple = pendingNodes.pop();
+            var pairOfTuple = Pair.of(tuple.a, tuple.b);
+            if (memo.contains(pairOfTuple)) {
                 continue;
             }
-            if (pair.left == null) {
-                System.out.println("TODO: exceptions");
-                continue;
-            }
-            if (unclobberedMemo.contains(pair.left)) {
+            if (unclobberedMemo.contains(tuple.a)) {
                 // not illegal necessarily but bad!
                 // throw new RuntimeException("WARNING: clobbered stack state (unbalanced loop)");
             }
-            unclobberedMemo.add(pair.left);
-            memo.add(pair);
+            unclobberedMemo.add(tuple.a);
+            memo.add(pairOfTuple);
             List<Statement> outStatements = new ArrayList<>();
             // System.out.println(statement.toString());
-            DecompilerReducer reducer = new DecompilerReducer(classpath, method, outStatements::add);
-            var stack = StackDirector.reduceInstructions(reducer, pair.left.instructions, pair.right, entry -> entry.type.computationType == 2);
-            decompiler.basicBlocks.put(pair.left, outStatements);
-            if (pair.left.end != null) {
-                pair.left.end.applyToStack(stack).forEach(pendingNodes::add);
+            DecompilerReducer reducer = new DecompilerReducer(classpath, method, tuple.c, outStatements::add);
+            var stack = StackDirector.reduceInstructions(reducer, tuple.a.instructions, tuple.b, entry -> entry.type.computationType == 2);
+            decompiler.basicBlocks.put(tuple.a, outStatements);
+            if (tuple.a.end != null) {
+                tuple.a.end.applyToStack(stack).forEach(pair -> pendingNodes.push(Tuple3.of(pair.left, pair.right, tuple.c.fork())));
             }
         }
         List<Statement> outStatements = new ArrayList<>();
@@ -262,6 +259,14 @@ public final class Decompiler {
             if (postCatchJumpBlock.end instanceof ControlFlowGraph.NodeEndJump) {
                 emitted.addAll(emitNode(postCatchJumpBlock, exceptionalBlock).toArrayList());
                 Label postCatchBlockLabel = ((ControlFlowGraph.NodeEndJump) postCatchJumpBlock.end).target;
+                lastTerminateAt = this.terminateAt;
+                this.terminateAt = postCatchBlockLabel;
+                emitted.addAll(emitNode(graph.labelMap.get(catchBlockLabel), catchBlock).toArrayList());
+                this.terminateAt = lastTerminateAt;
+                emitted.addAll(emitNode(graph.labelMap.get(postCatchBlockLabel), outStatements).toArrayList());
+            } else if (postCatchJumpBlock.end instanceof ControlFlowGraph.NodeEndBranch) {
+                emitted.addAll(emitNode(postCatchJumpBlock, exceptionalBlock).toArrayList());
+                Label postCatchBlockLabel = ((ControlFlowGraph.NodeEndBranch) postCatchJumpBlock.end).target;
                 lastTerminateAt = this.terminateAt;
                 this.terminateAt = postCatchBlockLabel;
                 emitted.addAll(emitNode(graph.labelMap.get(catchBlockLabel), catchBlock).toArrayList());

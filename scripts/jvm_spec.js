@@ -4,7 +4,7 @@ const fs = require('fs');
 const spec = JSON.parse(fs.readFileSync(process.argv[2], 'UTF-8'));
 
 const typeMap = {
-    varref: 'Local',
+    varref: 'int',
     constref: 'Constant',
     offset: 'Label',
     uint8: 'int',
@@ -28,7 +28,7 @@ const readUWidth = {
 }
 
 const readMap = {
-    varref: s => `method.getOrMakeLocal(${readUWidth[s]})`,
+    varref: s => `${readUWidth[s]}`,
     constref: s => `constants.get(${readUWidth[s]})`,
     offset: s => `labelMaker.apply((int) (${readWidth[s]}) + pc)`,
     uint8: 'in.readUnsignedByte()',
@@ -47,7 +47,7 @@ const writeWidth = {
 }
 
 const writeMap = {
-    varref: x => `${x}.index`,
+    varref: x => `${x}`,
     constref: x => `constantIndexer.apply(${x})`,
     offset: x => `labelIndexer.apply(${x}) - pc`,
     uint8: x => `((byte) ${x})`,
