@@ -271,7 +271,7 @@ public class ControlFlowGraph {
 
         @Override
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
-            return ImmutableList.of(Pair.of(fallthrough, stack.maybeInit().fromJust()));
+            return ImmutableList.of(Pair.of(fallthrough, stack.maybeTail().fromJust()));
         }
 
         @Override
@@ -290,7 +290,7 @@ public class ControlFlowGraph {
 
         @Override
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
-            return ImmutableList.of(Pair.of(fallthrough, stack.maybeInit().fromJust()));
+            return ImmutableList.of(Pair.of(fallthrough, stack.maybeTail().fromJust()));
         }
 
         @Override
@@ -321,6 +321,7 @@ public class ControlFlowGraph {
     public class NodeEndLookupswitch extends NodeEnd {
 
         public Lookupswitch instruction;
+        public StackEntry<Expression> switchOn = null;
 
         public NodeEndLookupswitch(Lookupswitch instruction) {
             this.instruction = instruction;
@@ -328,8 +329,9 @@ public class ControlFlowGraph {
 
         @Override
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
-            return Arrays.stream(this.instruction.pairs).collect(ImmutableList.collector()).map(pair -> Pair.of(labelMap.get(pair.right), stack.maybeInit().fromJust()))
-                .cons(Pair.of(labelMap.get(instruction._default), stack.maybeInit().fromJust()));
+            this.switchOn = stack.maybeHead().fromJust();
+            return Arrays.stream(this.instruction.pairs).collect(ImmutableList.collector()).map(pair -> Pair.of(labelMap.get(pair.right), stack.maybeTail().fromJust()))
+                .cons(Pair.of(labelMap.get(instruction._default), stack.maybeTail().fromJust()));
         }
 
         @Override
@@ -341,6 +343,7 @@ public class ControlFlowGraph {
     public class NodeEndTableswitch extends NodeEnd {
 
         public Tableswitch instruction;
+        public StackEntry<Expression> switchOn = null;
 
         public NodeEndTableswitch(Tableswitch instruction) {
             this.instruction = instruction;
@@ -348,8 +351,9 @@ public class ControlFlowGraph {
 
         @Override
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
-            return Arrays.stream(this.instruction.offsets).collect(ImmutableList.collector()).map(label -> Pair.of(labelMap.get(label), stack.maybeInit().fromJust()))
-                .cons(Pair.of(labelMap.get(instruction._default), stack.maybeInit().fromJust()));
+            this.switchOn = stack.maybeHead().fromJust();
+            return Arrays.stream(this.instruction.offsets).collect(ImmutableList.collector()).map(label -> Pair.of(labelMap.get(label), stack.maybeTail().fromJust()))
+                .cons(Pair.of(labelMap.get(instruction._default), stack.maybeTail().fromJust()));
         }
 
         @Override
@@ -385,7 +389,7 @@ public class ControlFlowGraph {
         @Override
         public ImmutableList<Pair<Node, ImmutableList<StackEntry<Expression>>>> applyToStack(ImmutableList<StackEntry<Expression>> stack) {
             Node node = (Node) ((ImmutableList) stack).maybeHead().fromJust();
-            return ImmutableList.of(Pair.of(node, stack.maybeInit().fromJust()));
+            return ImmutableList.of(Pair.of(node, stack.maybeTail().fromJust()));
         }
 
         @Override

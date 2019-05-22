@@ -46,6 +46,7 @@ public class TestJASM {
         int completed = 0, total = 0;
 
         for (Klass klass : classpath.getKlasses().values()) {
+            // if (!klass.name.equals("bej")) continue;
             ++total;
             try {
                 CompilationUnit decompiled = Decompiler.decompileClass(classpath, klass);

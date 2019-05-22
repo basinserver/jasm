@@ -13,9 +13,11 @@ import com.github.javaparser.ast.type.*;
 import com.protryon.jasm.*;
 import com.protryon.jasm.instruction.StackDirector;
 import com.protryon.jasm.instruction.psuedoinstructions.Label;
+import com.shapesecurity.functional.F;
 import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.Tuple3;
 import com.shapesecurity.functional.data.ImmutableList;
+import com.shapesecurity.functional.data.Maybe;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -199,8 +201,8 @@ public final class Decompiler {
     }
 
     private final HashMap<ControlFlowGraph.Node, ImmutableList<ControlFlowGraph.Node>> memoEmission = new HashMap<>();
-    // used to terminate the codegen of a try block NOTE this terminates for some ExitNode for which this label is the catchBlock NOT the label itself
-    private Label terminateAt = null;
+    // maybe.empty = nop immediate maybe.of(false) = return immediately maybe.of(true) = append basic block and return
+    private F<ControlFlowGraph.Node, Maybe<Boolean>> earlyTermination = null;
 
     protected static Pair<Statement, String> tempify(Method method, StackEntry<Expression> value) {
         String tempName = "t" + method.tempVariableCounter++;
@@ -214,6 +216,17 @@ public final class Decompiler {
             outStatements.add(new ExpressionStmt(new StringLiteralExpr("memoized?")));
             // this might not be right!
             return ImmutableList.empty(); // in progress
+        }
+        if (earlyTermination != null) {
+            Maybe<Boolean> termination = earlyTermination.apply(node);
+            if (termination.isJust()) {
+                if (termination.fromJust()) {
+                    outStatements.addAll(this.basicBlocks.get(node));
+                    return ImmutableList.of(node);
+                } else {
+                    return ImmutableList.empty();
+                }
+            }
         }
         memoEmission.put(node, ImmutableList.empty());
         List<ControlFlowGraph.Node> emitted = new ArrayList<>();
@@ -230,55 +243,55 @@ public final class Decompiler {
         } else if (node.end instanceof ControlFlowGraph.NodeEndEnterTry) {
             emitted.add(node);
             outStatements.addAll(this.basicBlocks.get(node));
-            Label lastTerminateAt = this.terminateAt;
-            Label catchBlockLabel = this.terminateAt = ((ControlFlowGraph.NodeEndEnterTry) node.end).catchBlock;
+            // var lastEarlyTermination = this.earlyTermination;
+            Label catchBlockLabel = ((ControlFlowGraph.NodeEndEnterTry) node.end).catchBlock;
+
             List<Statement> exceptionalBlock = new ArrayList<>();
-            List<ControlFlowGraph.Node> exceptionalEmitted = emitNode(((ControlFlowGraph.NodeEndEnterTry) node.end).fallthrough, exceptionalBlock).toArrayList();
-            emitted.addAll(exceptionalEmitted);
-            this.terminateAt = lastTerminateAt;
-            ControlFlowGraph.Node exitTryNode = null;
-            for (int i = exceptionalEmitted.size() - 1; i >= 0; --i) {
-                ControlFlowGraph.Node exceptionalNode = exceptionalEmitted.get(i);
-                if (exceptionalNode.end instanceof ControlFlowGraph.NodeEndExitTry) {
-                    exitTryNode = exceptionalNode;
+            ControlFlowGraph.Node startAt = ((ControlFlowGraph.NodeEndEnterTry) node.end).fallthrough;
+
+            while (startAt != null) {
+                List<ControlFlowGraph.Node> exceptionalEmitted = emitNode(startAt, exceptionalBlock).toArrayList();
+                startAt = null;
+                emitted.addAll(exceptionalEmitted);
+                ControlFlowGraph.Node exitTryNode = null;
+                for (int i = exceptionalEmitted.size() - 1; i >= 0; --i) {
+                    ControlFlowGraph.Node exceptionalNode = exceptionalEmitted.get(i);
+                    if (exceptionalNode.end instanceof ControlFlowGraph.NodeEndExitTry) {
+                        exitTryNode = exceptionalNode;
+                    }
                 }
-            }
-            if (exitTryNode == null) {
-                throw new RuntimeException("try-block termination node not found");
-            }
+                if (exitTryNode == null) {
+                    throw new RuntimeException("try-block termination node not found");
+                }
+                outStatements.add(new TryStmt(new BlockStmt(new NodeList<>(exceptionalBlock)), new NodeList<>(new CatchClause(new NodeList<>(), new NodeList<>(), (ClassOrInterfaceType) Decompiler.convertType(((ControlFlowGraph.NodeEndEnterTry) node.end).exceptionType), new SimpleName("e"), new BlockStmt(new NodeList<>()))), new BlockStmt(new NodeList<>())));
 
-            if (((ControlFlowGraph.NodeEndExitTry) exitTryNode.end).catchBlock != catchBlockLabel) {
-                throw new RuntimeException("broken exception stack");
-            }
-            ControlFlowGraph.Node postCatchJumpBlock = exitTryNode;
-            while (postCatchJumpBlock.end instanceof ControlFlowGraph.NodeEndExitTry) {
-                postCatchJumpBlock = ((ControlFlowGraph.NodeEndExitTry) postCatchJumpBlock.end).fallthrough;
-            }
-            NodeList<Statement> catchBlock = new NodeList<>();
-            outStatements.add(new TryStmt(new BlockStmt(new NodeList<>(exceptionalBlock)), new NodeList<>(new CatchClause(new NodeList<>(), new NodeList<>(), (ClassOrInterfaceType) Decompiler.convertType(((ControlFlowGraph.NodeEndEnterTry) node.end).exceptionType), new SimpleName("e"), new BlockStmt(catchBlock))), new BlockStmt(new NodeList<>())));
-            if (postCatchJumpBlock.end instanceof ControlFlowGraph.NodeEndJump) {
-                emitted.addAll(emitNode(postCatchJumpBlock, exceptionalBlock).toArrayList());
-                Label postCatchBlockLabel = ((ControlFlowGraph.NodeEndJump) postCatchJumpBlock.end).target;
-                lastTerminateAt = this.terminateAt;
-                this.terminateAt = postCatchBlockLabel;
-                emitted.addAll(emitNode(graph.labelMap.get(catchBlockLabel), catchBlock).toArrayList());
-                this.terminateAt = lastTerminateAt;
-                emitted.addAll(emitNode(graph.labelMap.get(postCatchBlockLabel), outStatements).toArrayList());
-            } else if (postCatchJumpBlock.end instanceof ControlFlowGraph.NodeEndBranch) {
-                emitted.addAll(emitNode(postCatchJumpBlock, exceptionalBlock).toArrayList());
-                Label postCatchBlockLabel = ((ControlFlowGraph.NodeEndBranch) postCatchJumpBlock.end).target;
-                lastTerminateAt = this.terminateAt;
-                this.terminateAt = postCatchBlockLabel;
-                emitted.addAll(emitNode(graph.labelMap.get(catchBlockLabel), catchBlock).toArrayList());
-                this.terminateAt = lastTerminateAt;
-                emitted.addAll(emitNode(graph.labelMap.get(postCatchBlockLabel), outStatements).toArrayList());
-            } else if (postCatchJumpBlock.end instanceof ControlFlowGraph.NodeEndReturn || postCatchJumpBlock.end == null) {
-                emitted.addAll(emitNode(postCatchJumpBlock, exceptionalBlock).toArrayList());
-                emitted.addAll(emitNode(graph.labelMap.get(catchBlockLabel), catchBlock).toArrayList());
-            } else {
-                throw new RuntimeException("unexpected try-block post-termination node end type: " + postCatchJumpBlock.end.getClass().getSimpleName());
-            }
+                /*ControlFlowGraph.Node postCatchJumpBlock = exitTryNode;
+                while (postCatchJumpBlock.end instanceof ControlFlowGraph.NodeEndExitTry) {
+                    postCatchJumpBlock = ((ControlFlowGraph.NodeEndExitTry) postCatchJumpBlock.end).fallthrough;
+                    emitted.add(postCatchJumpBlock);
+                }
+                if (postCatchJumpBlock.end instanceof ControlFlowGraph.NodeEndJump) {
+                    if (((ControlFlowGraph.NodeEndExitTry) exitTryNode.end).catchBlock != catchBlockLabel) {
+                        throw new RuntimeException("broken exception stack");
+                    }
+                    NodeList<Statement> catchBlock = new NodeList<>();
+                    emitted.addAll(emitNode(postCatchJumpBlock, exceptionalBlock).toArrayList());
+                    Label postCatchBlockLabel = ((ControlFlowGraph.NodeEndJump) postCatchJumpBlock.end).target;
+                    lastTerminateAt = this.terminateAt;
+                    this.terminateAt = postCatchBlockLabel;
+                    emitted.addAll(emitNode(graph.labelMap.get(catchBlockLabel), catchBlock).toArrayList());
+                    this.terminateAt = lastTerminateAt;
+                    emitted.addAll(emitNode(graph.labelMap.get(postCatchBlockLabel), outStatements).toArrayList());
+                    outStatements.add(new TryStmt(new BlockStmt(new NodeList<>(exceptionalBlock)), new NodeList<>(new CatchClause(new NodeList<>(), new NodeList<>(), (ClassOrInterfaceType) Decompiler.convertType(((ControlFlowGraph.NodeEndEnterTry) node.end).exceptionType), new SimpleName("e"), new BlockStmt(catchBlock))), new BlockStmt(new NodeList<>())));
+                } else if (postCatchJumpBlock.end instanceof ControlFlowGraph.NodeEndReturn || postCatchJumpBlock.end == null) {
+                    emitted.addAll(emitNode(postCatchJumpBlock, exceptionalBlock).toArrayList());
+                } else {
+                    // finally block
 
+                    throw new RuntimeException("unexpected try-block post-termination node end type: " + postCatchJumpBlock.end.getClass().getSimpleName());
+                }*/
+            }
+            // this.terminateAt = lastTerminateAt;
             //TODO: proper expression naming/stack resolution?
         } else if (node.end instanceof ControlFlowGraph.NodeEndExitTry) {
             return ImmutableList.of(node);
@@ -314,20 +327,33 @@ public final class Decompiler {
             emitted.add(node);
             outStatements.addAll(this.basicBlocks.get(node));
         } else if (node.end instanceof ControlFlowGraph.NodeEndMonitorEnter) {
-            // TODO:
+            throw new RuntimeException("monitorenter");
         } else if (node.end instanceof ControlFlowGraph.NodeEndMonitorExit) {
-            // TODO:
+            throw new RuntimeException("monitorexit");
         } else if (node.end instanceof ControlFlowGraph.NodeEndReturn) {
             emitted.add(node);
             outStatements.addAll(this.basicBlocks.get(node));
         } else if (node.end instanceof ControlFlowGraph.NodeEndLookupswitch) {
-            // TODO
+            throw new RuntimeException("lookupswitch");
         } else if (node.end instanceof ControlFlowGraph.NodeEndTableswitch) {
-            // TODO
+            emitted.add(node);
+            outStatements.addAll(this.basicBlocks.get(node));
+            ControlFlowGraph.NodeEndTableswitch tableswitch = (ControlFlowGraph.NodeEndTableswitch) node.end;
+            NodeList<SwitchEntry> switchEntries = new NodeList<>();
+            Set<ControlFlowGraph.Node> cases = Arrays.stream(tableswitch.instruction.offsets).map(graph.labelMap::get).collect(Collectors.toSet());
+            cases.add(graph.labelMap.get(tableswitch.instruction._default));
+            var lastEarlyTermination = this.earlyTermination;
+            this.earlyTermination = subNode -> {
+                return cases.contains(subNode) ? Maybe.of(false) : Maybe.empty();
+            };
+
+            this.earlyTermination = lastEarlyTermination;
+            outStatements.add(new SwitchStmt(tableswitch.switchOn.value, switchEntries));
+
         } else if (node.end instanceof ControlFlowGraph.NodeEndCallSub) {
-            // TODO
+            throw new RuntimeException("callsub");
         } else if (node.end instanceof ControlFlowGraph.NodeEndRetSub) {
-            // TODO
+            throw new RuntimeException("retsub");
         } else if (node.end == null) {
             emitted.add(node);
             outStatements.addAll(this.basicBlocks.get(node));
