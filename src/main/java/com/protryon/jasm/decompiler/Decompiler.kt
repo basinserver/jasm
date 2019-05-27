@@ -70,6 +70,8 @@ class Decompiler private constructor(private val graph: ControlFlowGraph) {
             val exceptionalBlock = ArrayList<Statement>()
             var startAt: ControlFlowGraph.Node? = (node.end as ControlFlowGraph.NodeEndEnterTry).fallthrough
 
+            val catchBlock = graph.labelMap[catchBlockLabel]!!
+
             while (startAt != null) {
                 val exceptionalEmitted = emitNode(startAt, exceptionalBlock).toArrayList()
                 startAt = null
@@ -84,8 +86,27 @@ class Decompiler private constructor(private val graph: ControlFlowGraph) {
                 if (exitTryNode == null) {
                     throw RuntimeException("try-block termination node not found")
                 }
-                outStatements.add(TryStmt(BlockStmt(NodeList(exceptionalBlock)), NodeList(CatchClause(NodeList(), NodeList(), Decompiler.convertType((node.end as ControlFlowGraph.NodeEndEnterTry).exceptionType!!) as ClassOrInterfaceType, SimpleName("e"), BlockStmt(NodeList()))), BlockStmt(NodeList())))
 
+                val postEndNode = (exitTryNode.end as ControlFlowGraph.NodeEndExitTry).fallthrough!!
+                when (postEndNode.end) {
+                    is ControlFlowGraph.NodeEndJump -> {
+                        val end = postEndNode.end as ControlFlowGraph.NodeEndJump
+                        val postStatements = ArrayList<Statement>()
+                        emitted.addAll(emitNode(graph.labelMap[end.target]!!, postStatements).toArrayList())
+                        val catchStatements = ArrayList<Statement>()
+                        emitted.addAll(emitNode(catchBlock, catchStatements).toArrayList())
+                        outStatements.add(TryStmt(BlockStmt(NodeList(exceptionalBlock)), NodeList(CatchClause(NodeList(), NodeList(), Decompiler.convertType((node.end as ControlFlowGraph.NodeEndEnterTry).exceptionType!!) as ClassOrInterfaceType, SimpleName("e"), BlockStmt(NodeList(catchStatements)))), BlockStmt(NodeList())))
+                        outStatements.addAll(postStatements)
+                    }
+                    is ControlFlowGraph.NodeEndReturn -> {
+                        error("node end return")
+                    }
+                    is ControlFlowGraph.NodeEndExitTry -> {
+                        error("node end exit try")
+                    }
+                    else -> error("assert failed: ${postEndNode.end?.javaClass?.simpleName}")
+                }
+                emitted.addAll(emitNode(postEndNode, outStatements).toArrayList())
                 /*ControlFlowGraph.Node postCatchJumpBlock = exitTryNode;
                 while (postCatchJumpBlock.end instanceof ControlFlowGraph.NodeEndExitTry) {
                     postCatchJumpBlock = ((ControlFlowGraph.NodeEndExitTry) postCatchJumpBlock.end).fallthrough;
@@ -112,9 +133,13 @@ class Decompiler private constructor(private val graph: ControlFlowGraph) {
                     throw new RuntimeException("unexpected try-block post-termination node end type: " + postCatchJumpBlock.end.getClass().getSimpleName());
                 }*/
             }
+
             // this.terminateAt = lastTerminateAt;
             //TODO: proper expression naming/stack resolution?
         } else if (node.end is ControlFlowGraph.NodeEndExitTry) {
+            emitted.add(node)
+            outStatements.addAll(this.basicBlocks[node]!!)
+            // emitted.addAll(emitNode((node.end as ControlFlowGraph.NodeEndExitTry).fallthrough!!, outStatements).toArrayList())
             return ImmutableList.of(node)
         } else if (node.end is ControlFlowGraph.NodeEndBranch) {
             outStatements.addAll(this.basicBlocks[node]!!)

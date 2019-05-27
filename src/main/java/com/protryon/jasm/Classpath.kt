@@ -13,22 +13,13 @@ import java.util.LinkedHashMap
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
-class Classpath @Throws(IOException::class)
-constructor(libraries: Array<String>, targets: Array<String>) {
+class Classpath(val resources: LinkedHashMap<String, Resource>) {
 
-    val resources = LinkedHashMap<String, Resource>()
     private val klasses = LinkedHashMap<String, Klass>()
     private val dummyKlasses = LinkedHashMap<String, Klass>()
     private val libraryKlasses = LinkedHashMap<String, Klass>()
 
     init {
-        val librarySet = ImmutableSet.ofUsingEquality(*libraries)
-        val allPaths = ArrayList(Arrays.asList(*libraries))
-        allPaths.addAll(Arrays.asList(*targets))
-        for (path in allPaths) {
-            val inLibrary = librarySet.contains(path)
-            recurDir(Paths.get(path), Paths.get(path), 0, inLibrary)
-        }
         val stage1 = initStage1(resources)
         stage1.forEach { javaName, stage1Class ->
             val klass = stage1Class.preClass()
@@ -53,34 +44,11 @@ constructor(libraries: Array<String>, targets: Array<String>) {
                 }
             }
         }
+
     }
 
     @Throws(IOException::class)
-    private fun recurDir(relativeTo: Path, path: Path, depth: Int, inLibrary: Boolean) {
-        if (depth > 32) {
-            throw RuntimeException("cannot recur more than 32 directories deep (do you have a symlink?)")
-        }
-        val f = path.normalize().toFile()
-        if (f.isDirectory) {
-            for (subFile in f.listFiles()) {
-                recurDir(relativeTo, subFile.toPath(), depth + 1, inLibrary)
-            }
-        } else if (f.isFile) {
-            if (f.absolutePath.endsWith(".jar")) {
-                println("loading jar: " + f.absolutePath)
-                val jar = JarFile(f)
-                jar.resources.forEach { key, value ->
-                    if (!key.startsWith("META-INF/")) {
-                        resources[key] = Resource("jar:$path:$key", value, inLibrary)
-                    }
-                }
-            } else {
-                println("loading file: " + f.absolutePath)
-                val name = f.toPath().relativize(relativeTo).toString()
-                resources[name] = Resource(name, Files.readAllBytes(f.toPath()), inLibrary)
-            }
-        }
-    }
+    constructor(libraries: Array<String>, targets: Array<String>) : this(prepareResources(LinkedHashMap(), libraries, targets))
 
     fun loadKlass(name: String): Klass {
         val jreKlass = jreKlasses[name]
@@ -199,6 +167,48 @@ constructor(libraries: Array<String>, targets: Array<String>) {
 
             println("Loaded " + jreKlasses.size + " JRE classes")
         }
+
+        @Throws(IOException::class)
+        private fun prepareResources(resources: LinkedHashMap<String, Resource>, libraries: Array<String>, targets: Array<String>): LinkedHashMap<String, Resource> {
+            val librarySet = ImmutableSet.ofUsingEquality(*libraries)
+            val allPaths = ArrayList(Arrays.asList(*libraries))
+            allPaths.addAll(Arrays.asList(*targets))
+            for (path in allPaths) {
+                val inLibrary = librarySet.contains(path)
+                recurDir(resources, Paths.get(path), Paths.get(path), 0, inLibrary)
+            }
+            return resources
+        }
+
+
+        @Throws(IOException::class)
+        private fun recurDir(resources: LinkedHashMap<String, Resource>, relativeTo: Path, path: Path, depth: Int, inLibrary: Boolean) {
+            if (depth > 32) {
+                throw RuntimeException("cannot recur more than 32 directories deep (do you have a symlink?)")
+            }
+            val f = path.normalize().toFile()
+            if (f.isDirectory) {
+                for (subFile in f.listFiles()) {
+                    recurDir(resources, relativeTo, subFile.toPath(), depth + 1, inLibrary)
+                }
+            } else if (f.isFile) {
+                if (f.absolutePath.endsWith(".jar")) {
+                    println("loading jar: " + f.absolutePath)
+                    val jar = JarFile(f)
+                    jar.resources.forEach { key, value ->
+                        if (!key.startsWith("META-INF/")) {
+                            resources[key] = Resource("jar:$path:$key", value, inLibrary)
+                        }
+                    }
+                } else {
+                    println("loading file: " + f.absolutePath)
+                    val name = f.toPath().relativize(relativeTo).toString()
+                    resources[name] = Resource(name, Files.readAllBytes(f.toPath()), inLibrary)
+                }
+            }
+        }
+
+
     }
 
 
